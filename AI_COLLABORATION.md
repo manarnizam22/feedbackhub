@@ -46,10 +46,37 @@ ADR-0002. Direction stayed with me; verification ran both ways.
 
 ## Worked examples
 
-*(This section fills in as the non-trivial parts get built — each entry shows the
-actual prompt, what came back, and what changed before it shipped. The raw logs
-are kept as I go, so the prompts here are real, lightly trimmed dictation and
-all.)*
+The prompts here are real — I dictate by voice, so they're conversational and
+imperfect; that's what directing an AI actually looks like. Lightly trimmed for
+readability only.
+
+### 1. Delete semantics for the data model
+
+Before the schema existed I asked, verbatim: _"We need to define who can delete what"_ The AI's answer distinguished the two — soft delete
+preserves the content graph, anonymization keeps the "delete my account" promise
+by overwriting personal fields — and it framed the wider question as a
+per-entity deletion matrix: votes hard-deleted (they're a toggle), comments
+hard-deleted by author or admin (flat threads, nothing references them),
+requests soft-deleted by owner only, accounts anonymized then soft-deleted. It
+also argued two product positions — admins shouldn't delete requests (declining
+via status is the honest moderation tool), and no "removed by moderator"
+tombstones.
+
+I overrode half of it, in two messages: _"We need to add an audit log to track everything, and I prefer to use soft delete everywhere"_, then _"We need deleted_by as well — no anonymization."_ The audit-log requirement genuinely changed
+the trade-off: once every mutation is recorded transactionally, uniform soft
+delete with `deleted_at`/`deleted_by` on every table is the more coherent model,
+and anonymization went from "keeping the deletion promise" to unnecessary — in
+an internal tool, account deletion is deactivation.
+
+What survived from the first output: the narrow deletion-authorization rules
+(admins still don't delete requests) and the argument for them. What shipped is
+neither the AI's first matrix nor my first instinct — the disagreement itself is
+recorded in ADR-0007, with the rejected option intact. The AI flagged the
+consequence of dropping anonymization once (deleted users keep rendering with
+name and email), I accepted it knowingly, and it went into SCOPE.md as a
+documented semantic rather than an accident.
+
+_(further examples added as the corresponding parts get built)_
 
 ## What I replaced even though it worked
 
@@ -70,8 +97,8 @@ somebody asked me to justify my database.
 
 ## What went wrong
 
-*(Logged the moment it happens, with what it cost and what changed afterwards.
-Nothing worth reporting yet.)*
+_(Logged the moment it happens, with what it cost and what changed afterwards.
+Nothing worth reporting yet.)_
 
 ## Attribution in the history
 
