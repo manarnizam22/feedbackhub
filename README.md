@@ -42,10 +42,17 @@ documented once they work)_
 
 ```bash
 pnpm install
-pnpm docker:up     # Postgres + Keycloak (realm auto-imported)
-pnpm db:migrate && pnpm db:seed
-pnpm dev           # API + web
+pnpm docker:up     # Postgres :5432 + Keycloak :8080, realm auto-imported
 ```
+
+- Keycloak admin console: [http://localhost:8080](http://localhost:8080) — `admin` / `admin`
+- Dev users (realm `feedbackhub`): `alice@dev.local` / `alice-dev` (user),
+  `admin@dev.local` / `admin-dev` (admin)
+- Google sign-in is wired in the realm; supply your own OAuth client via
+  `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` (see `.env.example`).
+  Without real credentials the button renders but Google rejects the flow.
+
+*(API/web dev servers, migrations and seed are documented with their features)*
 
 ### Tests
 
@@ -62,6 +69,9 @@ _(documented with the deployment feature)_
 
 *(kept current as features merge: what is working, what is partial, what is absent —
 see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)*
+
+- ✅ Compose stack: Postgres + Keycloak, realm auto-imported, dev users log in;
+  rebuilt-from-scratch verified
 
 ## Git workflow and commit convention
 

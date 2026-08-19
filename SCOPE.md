@@ -6,6 +6,10 @@ Where the edges of this project are, and why. Kept up to date as the work happen
 
 *(updated as features merge — each line added when the thing actually works)*
 
+- **Local infrastructure** — one command brings up Postgres and Keycloak with the
+  realm imported from a file: clients, roles, two dev users, Google sign-in wired
+  (bring-your-own OAuth credentials). Verified reproducible from a wiped volume.
+
 ## What's out, on purpose
 
 Decided up front, with the reasoning:
