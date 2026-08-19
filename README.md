@@ -45,6 +45,7 @@ pnpm install
 pnpm docker:up     # Postgres :5432 + Keycloak :8080, realm auto-imported
 pnpm db:migrate    # apply SQL migrations
 pnpm db:seed       # deterministic demo data (idempotent — safe to re-run)
+pnpm --filter @feedbackhub/api dev   # API on :3000, OpenAPI at /docs
 ```
 
 - Keycloak admin console: [http://localhost:8080](http://localhost:8080) — `admin` / `admin`
@@ -77,6 +78,10 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
 - ✅ Database: schema (9 tables, soft-delete + audit model), SQL migrations,
   idempotent seed; vote-uniqueness and single-default-status enforced by
   constraints (probed, not assumed)
+- ✅ API skeleton: global JWT guard (Keycloak JWKS — signature, issuer,
+  audience), CASL policy package with the full matrix unit-tested, shadow-user
+  upsert, `GET /bootstrap` single-payload startup, problem-details errors,
+  OpenAPI at `/docs`; integration-tested with real tokens
 
 ## Git workflow and commit convention
 

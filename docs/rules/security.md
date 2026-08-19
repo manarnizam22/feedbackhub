@@ -51,6 +51,13 @@ The matrix:
 - User text (descriptions, comments) is stored raw, rendered as text by Angular's
   default sanitization — never through `innerHTML`.
 
+## Dev-realm conveniences
+
+The dev/test realm enables direct access grants (password grant) on the SPA
+client so integration tests can obtain real tokens and exercise the actual JWKS
+verification path — no mocked guards anywhere. This is a dev-realm convenience
+only; a production realm would disable it.
+
 ## Operational
 
 - Secrets come from environment/k8s secrets; nothing secret in the repo — compose
