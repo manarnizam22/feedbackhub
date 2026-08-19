@@ -4,17 +4,21 @@ Where the edges of this project are, and why. Kept up to date as the work happen
 
 ## What's in
 
-*(updated as features merge — each line added when the thing actually works)*
+_(updated as features merge — each line added when the thing actually works)_
 
 - **Local infrastructure** — one command brings up Postgres and Keycloak with the
   realm imported from a file: clients, roles, two dev users, Google sign-in wired
   (bring-your-own OAuth credentials). Verified reproducible from a wiped volume.
+- **Data model** — 9 tables with the soft-delete + audit model (ADR-0007), SQL
+  migrations, deterministic idempotent seed. The invariants live in the database:
+  one vote per user per request (composite PK), at most one default status
+  (partial unique index) — both probed against the live schema.
 
 ## What's out, on purpose
 
 Decided up front, with the reasoning:
 
-- **Sending email.** The notification *preference* is real end-to-end — stored,
+- **Sending email.** The notification _preference_ is real end-to-end — stored,
   editable, resolved with the rest of the settings, respected by the backend — but
   no email leaves the system. Wiring delivery means an SMTP path and a mail-catcher
   container for local runs; that buys a demo of infrastructure, not of judgment.
@@ -48,11 +52,16 @@ Decided up front, with the reasoning:
 - Single tenant, single region, one deployment.
 - Employees are a semi-trusted user base: rate limits and moderation exist, but no
   CAPTCHA or anti-abuse hardening beyond that.
-- Content referenced by others (a request with comments) is soft-deleted so
-  discussions don't dangle; unreferenced content deletes hard.
+- Everything soft-deletes with `deleted_at`/`deleted_by`, and every mutation
+  writes an audit entry (ADR-0007). Account deletion is deactivation: the row
+  tombstones, personal data is retained (internal-tool semantics — documented
+  deliberately, no anonymization). Deletion rights are narrow: own votes and
+  comments (admins may moderate comments), own requests (admins decline via
+  status instead of deleting), own account.
+- The audit log is write-only in v1: captured from day one, no admin UI over it yet.
 
 ## With another week
 
-*(written honestly at the end — candidates so far: real notification delivery with
+_(written honestly at the end — candidates so far: real notification delivery with
 digest batching; a lint-enforced module boundary instead of a convention; profiling
-the list query under realistic volume before deciding on counter columns)*
+the list query under realistic volume before deciding on counter columns)_
