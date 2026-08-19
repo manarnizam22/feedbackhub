@@ -19,6 +19,13 @@ _(updated as features merge — each line added when the thing actually works)_
   problem-details errors, OpenAPI served at /docs, and the single `GET
 /bootstrap` payload (ADR-0009). Integration-tested with real tokens — no
   mocked auth anywhere.
+- **Feedback API** — the product core: request CRUD with one joined list query
+  (filter, search, sort, paginate, pinned-first, vote/comment counts, my-vote),
+  idempotent votes, comments with the approval setting honored, admin triage
+  (status, pin), per-day submission rate limit, soft deletes with audit rows on
+  every mutation. The authorization matrix runs as an integration suite with
+  real tokens — anonymous/non-owner/owner/admin per mutating endpoint, with 404
+  where 403 would leak existence.
 
 ## What's out, on purpose
 
