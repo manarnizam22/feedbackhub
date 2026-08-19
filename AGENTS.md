@@ -44,9 +44,11 @@ aspirationally.
    kind (not commit, not add, not init). When a piece of work is ready, the agent
    explicitly pings Manar: what changed, which files, and that it is a commit
    boundary. Manar reviews the diff, writes the message, commits and pushes.
-3. **Feature-branch flow.** Work happens on `feat/<name>` branches created and merged
-   by Manar into `main` — merged, never squashed; the history stays real.
-   Docs-only changes may go straight to `main` at Manar's discretion.
+3. **Feature-branch flow.** Work happens on `feat/FH-<n>-<slug>` branches created and
+   merged by Manar into `main` — with `--no-ff` merge commits, never squashed; the
+   history stays real. Branches always come off `main`; an API ticket merges before
+   the web ticket that depends on it, so the frontend always builds on merged,
+   verified API. Docs-only changes may go straight to `main` at Manar's discretion.
 4. **Decisions become ADRs.** Any choice with alternatives worth naming goes in
    `docs/adr/` (template: `.notes/templates/adr.md`) and gets one line in `DECISIONS.md`.
 5. **AI work is logged as it happens.** Each feature's `.notes/<name>/ai-log.md`
