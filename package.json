@@ -1,0 +1,27 @@
+{
+  "name": "feedbackhub",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,js,mjs,html,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,mjs,html,json,md,yml,yaml}\"",
+    "verify": "pnpm format:check && turbo run lint typecheck test --continue=dependencies-successful",
+    "docker:up": "docker compose -f infra/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker-compose.yml down",
+    "db:migrate": "pnpm --filter @feedbackhub/db migrate",
+    "db:seed": "pnpm --filter @feedbackhub/db seed",
+    "e2e": "pnpm --filter e2e run e2e"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.0",
+    "turbo": "^2.9.0"
+  },
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24"
+  }
+}

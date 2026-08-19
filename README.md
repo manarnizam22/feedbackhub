@@ -58,17 +58,18 @@ pnpm e2e           # Playwright against the compose stack (includes keyboard-onl
 
 _(documented with the deployment feature)_
 
-## What works / what doesn't
+## Status
 
-_(final pass — honest status per feature before submission)_
+*(kept current as features merge: what is working, what is partial, what is absent —
+see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)*
 
 ## Git workflow and commit convention
 
 `main` plus `feat/<name>` feature branches, merged into `main` with merge commits —
-never squashed, so the history keeps its story (an explicit assignment requirement).
+never squashed, so the history keeps its story.
 
 Conventional Commits (`feat(api): ...`, `fix(web): ...`, `docs: ...`), each with an
-AI-attribution trailer as required by the assignment brief:
+AI-attribution trailer marking how the change was authored:
 
 ```
 AI-Assisted: heavy | partial | none

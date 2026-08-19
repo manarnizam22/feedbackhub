@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.turbo/
+.angular/
+coverage/
+playwright-report/
+test-results/
+
+.env
+.env.local
+.env.*.local
+
+*.log
+.DS_Store
+Thumbs.db
+
+# private working notes (plans in progress, raw AI logs) — curated content ships via AI_COLLABORATION.md
+.notes/
