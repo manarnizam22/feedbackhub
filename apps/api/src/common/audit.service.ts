@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { auditLog, type Db } from '@feedbackhub/db';
 
-type Executor = Pick<Db, 'insert'>;
+import { DB } from './db.module.js';
 
-interface AuditEntry {
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
+export interface AuditEntry {
   actorId: string;
   action: string;
   entityType: string;
@@ -11,17 +13,32 @@ interface AuditEntry {
   data?: unknown;
 }
 
-/* Writes the audit row inside the caller's transaction (ADR-0007) — the
-   mutation and its trail commit or roll back together. */
+/* The single mutation path (ADR-0007): every mutating service call runs through
+   transaction(), which commits the change and its audit row together — a failed
+   mutation leaves no trail, a successful one always does. The entry may be
+   derived from the transaction's result (ids created inside, moderation flags);
+   returning null from the derive function skips auditing (idempotent no-ops). */
 @Injectable()
 export class AuditService {
-  async write(executor: Executor, entry: AuditEntry) {
-    await executor.insert(auditLog).values({
-      actorId: entry.actorId,
-      action: entry.action,
-      entityType: entry.entityType,
-      entityId: entry.entityId,
-      data: entry.data ?? null,
+  constructor(@Inject(DB) private readonly db: Db) {}
+
+  async transaction<T>(
+    entry: AuditEntry | ((result: T) => AuditEntry | null),
+    fn: (tx: Tx) => Promise<T>,
+  ): Promise<T> {
+    return this.db.transaction(async (tx) => {
+      const result = await fn(tx);
+      const resolved = typeof entry === 'function' ? entry(result) : entry;
+      if (resolved) {
+        await tx.insert(auditLog).values({
+          actorId: resolved.actorId,
+          action: resolved.action,
+          entityType: resolved.entityType,
+          entityId: resolved.entityId,
+          data: resolved.data ?? null,
+        });
+      }
+      return result;
     });
   }
 }
