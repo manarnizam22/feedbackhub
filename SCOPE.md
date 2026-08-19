@@ -13,6 +13,12 @@ _(updated as features merge — each line added when the thing actually works)_
   migrations, deterministic idempotent seed. The invariants live in the database:
   one vote per user per request (composite PK), at most one default status
   (partial unique index) — both probed against the live schema.
+- **API foundation** — authenticated-by-default NestJS API: JWT verified against
+  Keycloak's JWKS on every request, CASL policy defined once and unit-tested
+  against the full matrix, shadow users upserted from verified tokens,
+  problem-details errors, OpenAPI served at /docs, and the single `GET
+/bootstrap` payload (ADR-0009). Integration-tested with real tokens — no
+  mocked auth anywhere.
 
 ## What's out, on purpose
 

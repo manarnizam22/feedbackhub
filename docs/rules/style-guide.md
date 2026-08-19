@@ -27,6 +27,14 @@ conflict, pick one and flag the other.
 
 Comment only what the code cannot say: a constraint, an invariant, a deliberate
 oddity. No JSDoc on internal code, no narration of the obvious, no ticket references.
+**Never inside function bodies** — a comment worth keeping goes in a block above
+the function or declaration it explains.
+
+## Tests
+
+All test files live in `__tests__` folders colocated with the code under test
+(`src/<module>/__tests__/*.test.ts`); integration tests in the app-level
+`__tests__/` folder (`*.int.test.ts`).
 
 ## Errors
 
