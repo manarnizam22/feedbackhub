@@ -13,14 +13,33 @@ client. Every rule below is enforced server-side; the UI only mirrors it.
 
 ## Authorization — server-side, always
 
-- Angular route guards and hidden buttons are UX. Every rule is enforced again in
-  the API:
-  - Users mutate only their own requests/comments/votes/profile — ownership checked
-    against the JWT subject in the service, not trusted from the payload.
-  - Admin routes require the realm `admin` role from the verified token.
-- The integration suite carries the authorization matrix for every mutating
-  endpoint (see testing.md). This is the enforcement mechanism, not code review
-  vigilance.
+Policy is defined once as CASL abilities in `packages/auth` (ADR-0008), enforced
+in the API against fetched entities, mirrored in Angular for visibility only.
+The matrix:
+
+| Subject          | Action           | User | Admin | Condition                |
+| ---------------- | ---------------- | ---- | ----- | ------------------------ |
+| Request          | read             | ✅   | ✅    | not deleted (else 404)   |
+| Request          | create           | ✅   | ✅    | rate-limit setting       |
+| Request          | update content   | own  | own   | `authorId = user.id`     |
+| Request          | set status / pin | ❌   | ✅    |                          |
+| Request          | delete           | own  | ❌    | admins decline instead   |
+| Vote             | cast / withdraw  | own  | own   | `userId = user.id`       |
+| Comment          | create           | ✅   | ✅    | approval setting         |
+| Comment          | update           | own  | own   | `authorId = user.id`     |
+| Comment          | delete           | own  | any   | admin = moderation       |
+| Comment          | approve          | ❌   | ✅    |                          |
+| Category, Status | manage           | ❌   | ✅    |                          |
+| App settings     | manage           | ❌   | ✅    |                          |
+| Account/profile  | read / update    | own  | own   | `id = user.id`           |
+| Account          | delete           | own  | ❌    | personal, even to admins |
+| Audit log        | any              | ❌   | ❌    | write-only in v1         |
+
+- Ownership evaluates against the loaded record and the verified JWT subject —
+  never against anything the client sent.
+- Admin = realm `admin` role from the verified token.
+- The integration suite mirrors this table row by row: for every mutating
+  endpoint — anonymous, non-owner, owner, admin. The matrix is the test plan.
 
 ## Input handling
 

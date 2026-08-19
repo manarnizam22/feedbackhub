@@ -35,7 +35,7 @@ documented once they work)_
 
 ### Prerequisites
 
-- Node 24 LTS (`.nvmrc`), pnpm 10
+- Node 22+ (24 LTS recommended, `.nvmrc`), pnpm 10
 - Docker
 
 ### Local development
@@ -43,6 +43,8 @@ documented once they work)_
 ```bash
 pnpm install
 pnpm docker:up     # Postgres :5432 + Keycloak :8080, realm auto-imported
+pnpm db:migrate    # apply SQL migrations
+pnpm db:seed       # deterministic demo data (idempotent — safe to re-run)
 ```
 
 - Keycloak admin console: [http://localhost:8080](http://localhost:8080) — `admin` / `admin`
@@ -52,7 +54,7 @@ pnpm docker:up     # Postgres :5432 + Keycloak :8080, realm auto-imported
   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` (see `.env.example`).
   Without real credentials the button renders but Google rejects the flow.
 
-*(API/web dev servers, migrations and seed are documented with their features)*
+_(API/web dev servers are documented with their features)_
 
 ### Tests
 
@@ -67,11 +69,14 @@ _(documented with the deployment feature)_
 
 ## Status
 
-*(kept current as features merge: what is working, what is partial, what is absent —
-see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)*
+_(kept current as features merge: what is working, what is partial, what is absent —
+see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
 
 - ✅ Compose stack: Postgres + Keycloak, realm auto-imported, dev users log in;
   rebuilt-from-scratch verified
+- ✅ Database: schema (9 tables, soft-delete + audit model), SQL migrations,
+  idempotent seed; vote-uniqueness and single-default-status enforced by
+  constraints (probed, not assumed)
 
 ## Git workflow and commit convention
 

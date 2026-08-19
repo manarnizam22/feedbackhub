@@ -14,7 +14,7 @@ styling and component approach.
 
 - **Angular 22.1 (current stable, released 2026, supported to mid-2028)** — signals
   are the settled reactivity model, standalone components are the default, zoneless
-  change detection is stable — newest surface, but it is the *stable* line, not a
+  change detection is stable — newest surface, but it is the _stable_ line, not a
   preview.
 - **Angular 20 LTS** — longer track record — deliberately choosing an older major for
   a greenfield 2-day project signals caution with nothing to be cautious about.
