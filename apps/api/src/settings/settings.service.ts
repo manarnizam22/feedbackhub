@@ -28,4 +28,23 @@ export class SettingsService {
       .limit(1);
     return resolvePreferences(rows[0] ?? null);
   }
+
+  async getNumberSetting(key: string, fallback: number): Promise<number> {
+    const value = await this.getValue(key);
+    return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  }
+
+  async getBooleanSetting(key: string, fallback: boolean): Promise<boolean> {
+    const value = await this.getValue(key);
+    return typeof value === 'boolean' ? value : fallback;
+  }
+
+  private async getValue(key: string): Promise<unknown> {
+    const rows = await this.db
+      .select({ value: appSettings.value })
+      .from(appSettings)
+      .where(eq(appSettings.key, key))
+      .limit(1);
+    return rows[0]?.value;
+  }
 }

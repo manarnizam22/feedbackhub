@@ -76,6 +76,33 @@ consequence of dropping anonymization once (deleted users keep rendering with
 name and email), I accepted it knowingly, and it went into SCOPE.md as a
 documented semantic rather than an accident.
 
+### 2. Centralizing the audit trail
+
+The first version of the feedback endpoints audited correctly but repetitively:
+every service method opened a transaction and called `audit.write(tx, …)`
+inside it. Tests passed — the rows were written, rollbacks erased them. I
+rejected the shape anyway: _"I don't want to see `audit.write` repeated in
+every service and every function. Audit logging should be handled globally,
+ideally as part of the transaction — if the transaction fails, there's no need
+to log anything."_
+
+What came back was a single `audit.transaction(entry, fn)` wrapper that _is_
+the mutation path: it owns the transaction, runs the mutation, writes the audit
+row last inside the same transaction, and commits both together. A failed
+mutation leaves no trail; idempotent no-ops (voting twice) skip the entry via a
+null-returning derive function. No bare `db.transaction` remains in any
+mutating service.
+
+Two things about the exchange worth recording. First, the tests couldn't have
+caught this — they verify that audit rows exist, not that the next developer
+can't forget to write one; it took reading the diff to see the structural
+weakness. Second, the AI pushed back on going further: I might have wanted
+audit fully invisible to services (route decorators + an interceptor), and it
+argued that an interceptor runs outside the database transaction — which would
+break my own "no trail for failed transactions" requirement. The per-mutation
+_declaration_ (action name, entity, payload) stays visible in the service, and
+that visibility is what makes the trail reviewable. I accepted that boundary.
+
 _(further examples added as the corresponding parts get built)_
 
 ## What I replaced even though it worked

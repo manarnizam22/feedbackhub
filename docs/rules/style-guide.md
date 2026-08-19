@@ -9,8 +9,15 @@ conflict, pick one and flag the other.
 - Files: kebab-case (`feedback-list.store.ts`, `votes.service.ts`).
 - Angular: standalone components, `*.component.ts` / `*.store.ts` / `*.routes.ts`
   suffixes; selectors prefixed `fh-`.
-- Nest: one module per seam (`feedback/`, `taxonomy/`, `settings/`, `users/`);
-  controllers thin, services own logic, DB access stays inside the owning module.
+- Nest: **a module is a domain (bounded context), never a wrapper per
+  entity/table/operation.** One module per domain — `feedback/`, `taxonomy/`,
+  `settings/`, `users/` — each holding as many controllers/services as the
+  domain needs (e.g. requests, votes and comments are three services inside the
+  one feedback module). Adding an entity to an existing domain never creates a
+  module. Inside a domain folder, once it holds more than one controller or
+  service they group into `controllers/` and `services/` subfolders; small
+  domains stay flat until they grow. Controllers thin, services own logic, DB
+  access stays inside the owning module.
 - DB: snake_case tables and columns; singular table names avoided (`feedback_requests`,
   `votes`, `comments`).
 - Shared contracts: zod schemas in `packages/types`, named `XRequestSchema` /

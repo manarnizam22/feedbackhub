@@ -82,6 +82,10 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
   audience), CASL policy package with the full matrix unit-tested, shadow-user
   upsert, `GET /bootstrap` single-payload startup, problem-details errors,
   OpenAPI at `/docs`; integration-tested with real tokens
+- ✅ Feedback API: requests (list/search/sort/paginate, CRUD), idempotent
+  votes, comments incl. approval setting, admin triage (status/pin), daily
+  submission rate limit, audit trail — authorization matrix integration-tested
+  end to end
 
 ## Git workflow and commit convention
 
