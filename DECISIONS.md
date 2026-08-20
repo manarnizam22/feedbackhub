@@ -15,6 +15,7 @@ full ADR with context, options considered, and consequences. Format:
 | 0007 | Soft delete everywhere + transactional audit log              | [ADR-0007](docs/adr/0007-soft-delete-audit-log.md)         |
 | 0008 | CASL abilities, defined once, enforced in API, mirrored in UI | [ADR-0008](docs/adr/0008-casl-authorization.md)            |
 | 0009 | Config in DB by owner; one resolved bootstrap payload         | [ADR-0009](docs/adr/0009-settings-resolution-bootstrap.md) |
+| 0010 | Realtime via SSE, emitted from the audited-transaction commit | [ADR-0010](docs/adr/0010-realtime-sse-audit-bus.md)        |
 
 Highlights for a reviewer in a hurry:
 

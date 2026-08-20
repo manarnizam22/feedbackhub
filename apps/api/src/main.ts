@@ -10,7 +10,11 @@ import { config } from './config.js';
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
-  app.enableCors({ origin: config.corsOrigin, credentials: true });
+  app.enableCors({
+    origin: config.corsOrigin,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
   app.useGlobalFilters(new AllExceptionsFilter());
 
   const openApiConfig = new DocumentBuilder()

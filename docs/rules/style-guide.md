@@ -11,6 +11,9 @@ conflict, pick one and flag the other.
   `request-list.ts` exports `RequestList`); stores as `*-store.ts`; shared
   primitives in `app/ui/` with `fh-` selectors; feature folders per domain
   (`feedback/`, `settings/`, `admin/`), `core/` for auth/http/bootstrap.
+  Inside a domain: `data/` (api + stores) and `pages/<page-name>/` (ts + html
+  pair per page). Cross-folder imports use the tsconfig aliases (`@core/*`,
+  `@ui/*`, `@feedback/*`, …) — relative imports only within the same folder.
 - Nest: **a module is a domain (bounded context), never a wrapper per
   entity/table/operation.** One module per domain — `feedback/`, `taxonomy/`,
   `settings/`, `users/` — each holding as many controllers/services as the
