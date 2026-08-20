@@ -57,7 +57,14 @@ export class RequestDetailPage {
 
   constructor() {
     void this.load();
+    /* Own actions already refresh explicitly after the mutation — reacting to
+       their SSE echo would re-render mid-interaction (a race the e2e suite
+       caught: an edit box opened on the wrong comment). Only foreign events
+       trigger a reload. */
     const unsubscribe = live.onChange((event) => {
+      if (event.actorId === this.bootstrap.profile()?.id) {
+        return;
+      }
       const aboutThisRequest = event.entityId === this.id;
       const aboutItsComments = event.entityType === 'comment';
       if ((aboutThisRequest || aboutItsComments) && this.state() === 'ready') {
@@ -67,12 +74,24 @@ export class RequestDetailPage {
     inject(DestroyRef).onDestroy(unsubscribe);
   }
 
+  private loadSeq = 0;
+
   async load(): Promise<void> {
-    this.state.set('loading');
+    const seq = ++this.loadSeq;
+    if (this.state() !== 'ready') {
+      this.state.set('loading');
+    }
     try {
-      this.request.set(await firstValueFrom(this.api.detail(this.id)));
+      const detail = await firstValueFrom(this.api.detail(this.id));
+      if (seq !== this.loadSeq) {
+        return;
+      }
+      this.request.set(detail);
       this.state.set('ready');
     } catch (error) {
+      if (seq !== this.loadSeq) {
+        return;
+      }
       this.state.set(
         error instanceof ApiError && error.problem.status === 404 ? 'missing' : 'error',
       );
