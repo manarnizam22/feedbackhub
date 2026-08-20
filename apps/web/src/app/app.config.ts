@@ -8,6 +8,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
+import { apiErrorInterceptor } from './core/api-error-interceptor';
 import { authInterceptor } from './core/auth-interceptor';
 import { BootstrapStore } from './core/bootstrap-store';
 import { initKeycloak } from './core/keycloak';
@@ -16,7 +17,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, apiErrorInterceptor])),
     provideAppInitializer(async () => {
       const bootstrap = inject(BootstrapStore);
       await initKeycloak();
