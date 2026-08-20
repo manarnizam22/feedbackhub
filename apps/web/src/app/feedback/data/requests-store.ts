@@ -2,8 +2,9 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type { ListRequestsResponse, RequestListItem } from '@feedbackhub/types';
 
-import { ApiError } from '../core/api-error';
-import { BootstrapStore } from '../core/bootstrap-store';
+import { ApiError } from '@core/api-error';
+import { BootstrapStore } from '@core/bootstrap-store';
+
 import { FeedbackApi } from './feedback-api';
 
 export type ListState = 'loading' | 'error' | 'ready';
@@ -112,9 +113,7 @@ export class RequestsStore {
       this.data.set({
         ...current,
         items: current.items.map((entry) =>
-          entry.id === item.id
-            ? { ...entry, myVote, voteCount: entry.voteCount + delta }
-            : entry,
+          entry.id === item.id ? { ...entry, myVote, voteCount: entry.voteCount + delta } : entry,
         ),
       });
     const voting = !item.myVote;

@@ -11,7 +11,7 @@ import type {
   UpdateRequest,
 } from '@feedbackhub/types';
 
-import { env } from '../core/env';
+import { env } from '@core/env';
 
 /* Plain typed HTTP surface of the feedback domain. Error mapping lives in the
    api-error interceptor; auth lives in the auth interceptor — nothing here but

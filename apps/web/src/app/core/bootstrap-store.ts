@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { defineAbilityFor } from '@feedbackhub/auth';
 import type { BootstrapResponse } from '@feedbackhub/types';
 
 import { env } from './env';
@@ -22,6 +23,12 @@ export class BootstrapStore {
   readonly statuses = computed(() => this.state()?.taxonomy.statuses ?? []);
   readonly activeCategories = computed(() => this.categories().filter((c) => c.active));
   readonly isAdmin = computed(() => this.profile()?.isAdmin ?? false);
+  /* the same CASL policy the API enforces (ADR-0008) — here it only decides
+     what renders; the server remains the authority */
+  readonly ability = computed(() => {
+    const profile = this.profile();
+    return profile ? defineAbilityFor({ id: profile.id, isAdmin: profile.isAdmin }) : null;
+  });
   readonly initials = computed(() => {
     const name = this.profile()?.displayName ?? '';
     return name

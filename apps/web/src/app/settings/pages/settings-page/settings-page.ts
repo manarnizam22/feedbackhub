@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 
-import { FhEmptyState } from '../ui/empty-state';
+import { FhEmptyState } from '@ui/empty-state';
 
 @Component({
   selector: 'app-settings-page',
