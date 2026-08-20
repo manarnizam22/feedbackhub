@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: feedbackhub
+
+resources:
+  - k8s/namespace.yaml
+  - k8s/secrets.yaml
+  - k8s/postgres.yaml
+  - k8s/keycloak.yaml
+  - k8s/api.yaml
+  - k8s/web.yaml
+  - k8s/migrate-job.yaml
+
+configMapGenerator:
+  - name: postgres-initdb
+    files:
+      - postgres/init-databases.sql
+  - name: keycloak-realm
+    files:
+      - keycloak/realm-feedbackhub.json
+  - name: keycloak-theme-root
+    files:
+      - keycloak/themes/feedbackhub/login/theme.properties
+  - name: keycloak-theme-css
+    files:
+      - keycloak/themes/feedbackhub/login/resources/css/feedbackhub.css
+  - name: keycloak-theme-messages
+    files:
+      - keycloak/themes/feedbackhub/login/messages/messages_en.properties
+
+generatorOptions:
+  disableNameSuffixHash: true
