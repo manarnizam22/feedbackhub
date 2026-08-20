@@ -2,6 +2,7 @@
   "realm": "feedbackhub",
   "enabled": true,
   "displayName": "FeedbackHub",
+  "loginTheme": "feedbackhub",
   "sslRequired": "external",
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,

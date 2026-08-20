@@ -1,0 +1,233 @@
+/* FeedbackHub login theme — matches the SPA: zinc dark surface, indigo accents,
+   rounded card, system font stack. Extends keycloak.v2 (PatternFly v5); the
+   base theme's own variables are the primary override hooks. */
+
+/* follows the system scheme exactly like the SPA (theme.ts): light = zinc-50
+   surface + white card, dark = zinc-950 + zinc-900 card */
+:root {
+  --fh-bg: #fafafa;
+  --fh-card: #ffffff;
+  --fh-input-bg: #f4f4f5;
+  --fh-border: #e4e4e7;
+  --fh-text: #18181b;
+  --fh-muted: #52525b;
+  --fh-link: #4f46e5;
+  --fh-link-hover: #4338ca;
+  --fh-glow: #e0e7ff99;
+  --fh-shadow: 0 12px 30px rgb(0 0 0 / 0.08);
+  --fh-indigo: #4f46e5;
+  --fh-indigo-hover: #6366f1;
+  --fh-radius: 0.75rem;
+  --keycloak-card-top-color: transparent;
+  --keycloak-bg-logo-url: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fh-bg: #09090b;
+    --fh-card: #18181b;
+    --fh-input-bg: #09090b;
+    --fh-border: #27272a;
+    --fh-text: #fafafa;
+    --fh-muted: #a1a1aa;
+    --fh-link: #818cf8;
+    --fh-link-hover: #a5b4fc;
+    --fh-glow: #1e1b4b66;
+    --fh-shadow: 0 20px 50px rgb(0 0 0 / 0.5);
+  }
+}
+
+.login-pf body,
+body#keycloak-bg {
+  background:
+    radial-gradient(80rem 40rem at 50% -10%, var(--fh-glow), transparent),
+    var(--fh-bg) !important;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+.pf-v5-c-login__container {
+  grid-template-columns: 24rem;
+}
+
+.pf-v5-c-title {
+  font-weight: 700;
+}
+
+/* wordmark — base theme styles this by ID with uppercase; neutralize, then
+   rebuild as the app header: "Feedback" white + "Hub" indigo */
+#kc-header-wrapper {
+  font-size: 0;
+  letter-spacing: 0;
+  text-transform: none;
+}
+#kc-header-wrapper::before {
+  content: 'Feedback';
+  font-size: 1.75rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--fh-text);
+}
+#kc-header-wrapper::after {
+  content: 'Hub';
+  font-size: 1.75rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--fh-link);
+}
+
+/* the card */
+.pf-v5-c-login__main {
+  background: var(--fh-card);
+  border: 1px solid var(--fh-border);
+  border-radius: var(--fh-radius);
+  box-shadow: var(--fh-shadow);
+  overflow: hidden;
+  color: var(--fh-text);
+}
+.pf-v5-c-login__main-header {
+  border-top: none;
+}
+.pf-v5-c-login__main-header,
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer {
+  background: transparent;
+}
+
+.pf-v5-c-title {
+  color: var(--fh-text);
+  font-size: 1.25rem !important;
+  font-weight: 600;
+}
+
+/* form */
+.pf-v5-c-form__label-text {
+  color: var(--fh-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* inputs — app anatomy: one solid rounded border, no PatternFly bottom-accent
+   bar (drawn by the wrapper's ::before/::after), calm fill */
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--BackgroundColor: var(--fh-input-bg);
+  --pf-v5-c-form-control--Color: var(--fh-text);
+  background: var(--fh-input-bg);
+  border: 1px solid var(--fh-border);
+  border-radius: 0.5rem;
+}
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+  border: none !important;
+}
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control input {
+  background: transparent;
+  color: var(--fh-text);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.75rem;
+}
+.pf-v5-c-form-control:focus-within {
+  border-color: var(--fh-indigo);
+  outline: 2px solid var(--fh-indigo);
+  outline-offset: 0;
+}
+
+/* password: input + eye toggle inside ONE rounded group */
+.pf-v5-c-input-group {
+  background: var(--fh-input-bg);
+  border: 1px solid var(--fh-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.pf-v5-c-input-group .pf-v5-c-form-control {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.pf-v5-c-input-group .pf-v5-c-form-control:focus-within {
+  outline: none;
+}
+.pf-v5-c-input-group:focus-within {
+  border-color: var(--fh-indigo);
+  outline: 2px solid var(--fh-indigo);
+  outline-offset: 0;
+}
+
+/* dark autofill — otherwise Chrome paints inputs yellow-white */
+.pf-v5-c-form-control input:-webkit-autofill,
+.pf-v5-c-form-control input:-webkit-autofill:hover,
+.pf-v5-c-form-control input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--fh-input-bg) inset;
+  -webkit-text-fill-color: var(--fh-text);
+  caret-color: var(--fh-text);
+}
+
+/* primary action — PF draws button borders with ::after */
+.pf-v5-c-button.pf-m-primary {
+  background-color: var(--fh-indigo);
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+.pf-v5-c-button.pf-m-primary:hover {
+  background-color: var(--fh-indigo-hover);
+}
+.pf-v5-c-button.pf-m-primary::after {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+/* secondary (social) buttons */
+.pf-v5-c-button.pf-m-secondary {
+  background: transparent;
+  border-radius: 0.5rem;
+  color: var(--fh-text);
+}
+.pf-v5-c-button.pf-m-secondary:hover {
+  background: var(--fh-border);
+  color: var(--fh-text);
+}
+.pf-v5-c-button.pf-m-secondary::after {
+  border: 1px solid var(--fh-border);
+  border-radius: 0.5rem;
+}
+
+/* eye toggle on password — borderless, part of the group */
+.pf-v5-c-button.pf-m-control {
+  background: transparent;
+  color: var(--fh-muted);
+}
+.pf-v5-c-button.pf-m-control::after {
+  border: none;
+}
+
+/* links: forgot password, register */
+a,
+.pf-v5-c-login__main a {
+  color: var(--fh-link);
+}
+a:hover,
+.pf-v5-c-login__main a:hover {
+  color: var(--fh-link-hover);
+}
+
+.pf-v5-c-login__main-footer-band-item,
+.pf-v5-c-helper-text__item-text,
+.pf-v5-c-login__main-footer-band,
+.pf-v5-c-check__label,
+.pf-v5-c-form__helper-text {
+  color: var(--fh-muted);
+}
+
+.pf-v5-c-login__main-footer-band-item {
+  font-size: 0.875rem;
+}
+
+.pf-v5-c-alert {
+  border-radius: 0.5rem;
+}
