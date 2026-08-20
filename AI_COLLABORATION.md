@@ -38,6 +38,14 @@ docs — AGENTS.md, the ADRs, the rules in `docs/rules/` — which are loaded in
 every session. So the longer the project ran, the more the repo itself became
 the prompt.
 
+The method did change under deadline pressure, in two honest ways. Branching
+moved from one-branch-per-ticket to one-branch-per-epic (user journeys;
+settings+admin; delivery) with small per-ticket commits inside — the ceremony
+shrank, the granular history stayed. And once, late on day two, the AI started
+generating a feature before its plan existed; I stopped it and demanded the
+plan and the branch first. The discipline held because I held it — which is,
+I think, the honest answer to how plan-first survives contact with a deadline.
+
 Proposals got tested against hard requirements before being accepted, in both
 directions. Early on I suggested Clerk for identity, because I reached for a
 managed service by instinct. The agent pushed back: closed-source, can't
@@ -133,8 +141,6 @@ The gap between first output and shipped was closed by manual retesting, not
 by more generation. If I had accepted the first plausible fix, the bug would
 have survived to the reviewer's desk.
 
-_(further examples added as the corresponding parts get built)_
-
 ## What I replaced even though it worked
 
 Two cases on day one, both about the same instinct:
@@ -154,8 +160,56 @@ somebody asked me to justify my database.
 
 ## What went wrong
 
-_(Logged the moment it happens, with what it cost and what changed afterwards.
-Nothing worth reporting yet.)_
+Plenty — logged the moment it happened, never reconstructed. The most
+instructive cases:
+
+**The rate limiter rate-limited its own test suite.** The daily-submission
+limit worked so well that after a day of test runs, both the integration suite
+and my own account hit the quota — tests failed with 429s that looked like
+regressions. Worse, a failing run once left the tightened test limit stuck in
+the shared dev database, so the _next_ run failed differently, and later my
+manually saved admin settings were silently erased by a suite teardown. Three
+rounds of this produced the durable rule: integration suites snapshot the
+settings they touch and restore the snapshot — never seed values — and any
+test data they create is tagged and hard-deleted. Cost: perhaps an hour across
+the project; worth it for the lesson that a shared dev database makes tests
+and humans coworkers who must clean up after themselves.
+
+**CORS passed every test and failed in the browser.** Votes, edits and deletes
+died with a CORS error while reads and creates worked — the CORS layer's
+_default_ allowed-methods list (`GET,HEAD,POST`) was narrower than the API's
+verbs, so exactly the PUT/PATCH/DELETE endpoints failed preflight. The
+integration suite calls the API server-side and never preflights, so it was
+structurally unable to catch this. Diagnosed by replaying the OPTIONS request
+directly and reading the response headers. Lesson: browser-only failure modes
+(CORS, cookies, redirects) need browser-level tests — the e2e suite now votes
+through a real browser.
+
+**Realtime introduced a race the e2e suite caught on its first serious run.**
+With SSE refreshes live, a user action and its own server echo could trigger
+two overlapping loads — and the older HTTP response sometimes resolved last,
+overwriting fresh data (my new comment visibly vanished while sitting in the
+database). Two fixes shipped: a sequence guard so stale responses can never
+win, and echo suppression — events caused by your own user ID don't trigger
+reloads, because the app already refreshed after its own mutation. A third
+failure in the same test turned out to be the _test's_ bug (opening the editor
+replaced the text its locator anchored on). One journey test, three distinct
+root causes, each one real.
+
+**Environment lies.** A "corrupt zip" during Node installation was actually a
+full disk truncating downloads; a dead-looking dev server was a watcher that
+died during a git branch switch; a crashed e2e run was Windows out of memory
+under kind + Docker + dev servers. Each cost minutes-to-an-hour and taught the
+same meta-lesson: when a tool's error message is implausible, check the
+environment before debugging the tool.
+
+**Version-era traps caught by policy, not luck.** `typescript@latest` is now
+the 7.0 native compiler (Angular pins ~6.0, the backend ~5.9 — three majors,
+one monorepo, all deliberate); TS 6 deprecated `baseUrl`; CASL v7's generics
+needed the exact `InferSubjects` distribution shape while runtime behavior was
+correct throughout. The standing rule — verify versions against live sources
+before writing them down — exists because model memory ages; it fired usefully
+several times.
 
 ## Attribution in the history
 

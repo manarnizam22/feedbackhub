@@ -45,6 +45,17 @@ _(updated as features merge — each line added when the thing actually works)_
   to everyone else) with bell, unread badge and mark-read. Single-replica
   fan-out by design; Redis pub/sub is the documented scale-out (ADR-0010).
 
+- **Deployment** — one Dockerfile per app (multi-stage; the web image is nginx
+  with SPA fallback and an entrypoint that writes runtime config from env vars,
+  so one build runs anywhere), kind cluster with NodePorts, secrets/configmaps
+  via kustomize, migrations+seed as an in-cluster Job. Verified end to end on a
+  real cluster: a token issued by in-cluster Keycloak accepted by the
+  in-cluster API (ADR-0011's issuer/JWKS split).
+- **E2E** — Playwright against the running stack with real Keycloak logins:
+  user journey (list, search, vote, discuss, submit, edit, delete), admin
+  journey (triage, admin area), and a keyboard-only pass of the core journey.
+  10/10, rerun-deterministic.
+
 ## What's out, on purpose
 
 Decided up front, with the reasoning:
@@ -93,6 +104,19 @@ Decided up front, with the reasoning:
 
 ## With another week
 
-_(written honestly at the end — candidates so far: real notification delivery with
-digest batching; a lint-enforced module boundary instead of a convention; profiling
-the list query under realistic volume before deciding on counter columns)_
+- **Notification delivery and hygiene** — email via a queue consumer on the
+  existing audit event stream (the seam is built), digest batching, pruning of
+  old notification rows, and an unread-per-request grouping in the bell.
+- **Realtime at scale** — Redis pub/sub behind the event bus so the API can run
+  more than one replica (ADR-0010 documents the seam; today replicas=1).
+- **Enforced module boundaries** — a lint rule instead of convention for the
+  domain seams, front and back.
+- **Performance evidence** — load a realistic volume and profile the list
+  query before deciding on denormalized counters (ADR-0003's escape hatch).
+- **Admin audit viewer** — the trail is complete and transactional; reading it
+  is deliberately absent (write-only in v1).
+- **CI** — `pnpm verify` and the e2e suite in a pipeline with a compose
+  service container; everything is already headless-runnable.
+- **kind node-image compatibility** — the newest kindest/node failed on this
+  Docker Desktop; pinning v1.31.9 works and is documented, but the root cause
+  deserves a look.
