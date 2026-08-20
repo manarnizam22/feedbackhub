@@ -60,14 +60,39 @@
                 <span>{{ relativeTime(req.createdAt) }}</span>
               </div>
             </div>
-            <div class="flex shrink-0 gap-2">
-              @if (canEdit()) {
-                <a fh-button variant="ghost" [routerLink]="['/requests', req.id, 'edit']">Edit</a>
-              }
-              @if (canDelete()) {
-                <button fh-button variant="danger" type="button" (click)="deleteRequest()">
-                  Delete
-                </button>
+            <div class="flex shrink-0 flex-col items-end gap-2">
+              <div class="flex gap-2">
+                @if (canEdit()) {
+                  <a fh-button variant="ghost" [routerLink]="['/requests', req.id, 'edit']">Edit</a>
+                }
+                @if (canDelete()) {
+                  <button fh-button variant="danger" type="button" (click)="deleteRequest()">
+                    Delete
+                  </button>
+                }
+              </div>
+              @if (canTriage()) {
+                <div
+                  class="flex items-center gap-2 rounded-lg border border-dashed border-indigo-300 p-2 dark:border-indigo-800"
+                  aria-label="Admin triage"
+                >
+                  <label class="sr-only" for="triage-status">Set status</label>
+                  <select
+                    id="triage-status"
+                    class="h-8 rounded-md border border-zinc-300 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+                    [value]="req.statusId"
+                    (change)="setStatus($any($event.target).value)"
+                  >
+                    @for (status of bootstrap.statuses(); track status.id) {
+                      @if (status.active || status.id === req.statusId) {
+                        <option [value]="status.id">{{ status.name }}</option>
+                      }
+                    }
+                  </select>
+                  <button fh-button variant="ghost" type="button" (click)="togglePin()">
+                    {{ req.pinned ? 'Unpin' : 'Pin' }}
+                  </button>
+                </div>
               }
             </div>
           </div>

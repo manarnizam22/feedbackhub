@@ -3,7 +3,7 @@
    prefixed 'itest:' and hard-deleted afterwards so reruns stay deterministic. */
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { and, eq, inArray, like, sql } from 'drizzle-orm';
+import { and, eq, inArray, like, ne, sql } from 'drizzle-orm';
 import {
   appSettings,
   auditLog,
@@ -88,6 +88,14 @@ describe('feedback API (integration)', () => {
       .update(appSettings)
       .set({ value: false })
       .where(eq(appSettings.key, 'comments_require_approval'));
+    await db
+      .update(feedbackRequests)
+      .set({ pinned: false })
+      .where(ne(feedbackRequests.id, SEEDED_PINNED));
+    await db
+      .update(feedbackRequests)
+      .set({ pinned: true })
+      .where(eq(feedbackRequests.id, SEEDED_PINNED));
   });
 
   afterAll(async () => {
@@ -269,7 +277,7 @@ describe('feedback API (integration)', () => {
       expect(audit[0]!.data).toMatchObject({ moderation: true });
     });
 
-    it('approval setting: pending comment visible to author only', async () => {
+    it('approval flow: pending visible to author and admin; queue + approve makes it public', async () => {
       await db
         .update(appSettings)
         .set({ value: true })
@@ -279,16 +287,32 @@ describe('feedback API (integration)', () => {
         body: 'awaiting approval',
       });
       expect(posted.json().approved).toBe(false);
+      const commentId = posted.json().id;
 
       const asAuthor = RequestDetailSchema.parse(
         (await call('GET', `/requests/${created.id}`, alice)).json(),
       );
       expect(asAuthor.comments.some((c) => c.body === 'awaiting approval')).toBe(true);
 
-      const asOther = RequestDetailSchema.parse(
+      const asAdmin = RequestDetailSchema.parse(
         (await call('GET', `/requests/${created.id}`, admin)).json(),
       );
-      expect(asOther.comments.some((c) => c.body === 'awaiting approval')).toBe(false);
+      expect(asAdmin.comments.some((c) => c.body === 'awaiting approval' && !c.approved)).toBe(
+        true,
+      );
+
+      const queue = await call('GET', '/admin/comments/pending', admin);
+      expect(queue.statusCode).toBe(200);
+      expect(queue.json().some((c: { id: string }) => c.id === commentId)).toBe(true);
+      const userQueue = await call('GET', '/admin/comments/pending', alice);
+      expect(userQueue.statusCode).toBe(403);
+
+      const approved = await call('POST', `/comments/${commentId}/approve`, admin);
+      expect(approved.statusCode).toBe(201);
+      expect(approved.json().approved).toBe(true);
+      const userApprove = await call('POST', `/comments/${commentId}/approve`, alice);
+      expect(userApprove.statusCode).toBe(403);
+
       await db
         .update(appSettings)
         .set({ value: false })

@@ -63,7 +63,7 @@ export class RequestsController {
   @Get(':id')
   @ApiOperation({ summary: 'Request detail with discussion' })
   detail(@CurrentUser() user: AuthenticatedUser, @Param('id', IdParam) id: string) {
-    return this.requests.detail(user.id, id);
+    return this.requests.detail(user.id, id, user.isAdmin);
   }
 
   @Patch(':id')

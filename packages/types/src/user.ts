@@ -18,5 +18,10 @@ export const PreferencesSchema = z.object({
   notifyOnComment: z.boolean(),
 });
 
+export const UpdateProfileSchema = z.object({
+  displayName: z.string().trim().min(1, 'Display name cannot be empty').max(80),
+});
+
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type Preferences = z.infer<typeof PreferencesSchema>;
+export type UpdateProfile = z.infer<typeof UpdateProfileSchema>;
