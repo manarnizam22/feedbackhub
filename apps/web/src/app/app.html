@@ -1,0 +1,63 @@
+<header
+  class="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80"
+>
+  <div class="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4">
+    <a routerLink="/requests" class="text-base font-semibold tracking-tight">
+      Feedback<span class="text-indigo-600">Hub</span>
+    </a>
+    <nav class="flex items-center gap-1 text-sm" aria-label="Main">
+      <a fh-button variant="ghost" routerLink="/requests">Requests</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-3">
+      <button
+        type="button"
+        class="flex size-9 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        [cdkMenuTriggerFor]="userMenu"
+        aria-label="Account menu"
+      >
+        {{ store.initials() }}
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-5xl px-4 py-6">
+  <router-outlet />
+</main>
+
+<ng-template #userMenu>
+  <div
+    cdkMenu
+    class="mt-2 w-56 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+  >
+    <div class="px-3 py-2">
+      <p class="truncate text-sm font-medium">{{ store.profile()?.displayName }}</p>
+      <p class="truncate text-xs text-zinc-500">{{ store.profile()?.email }}</p>
+    </div>
+    <hr class="my-1 border-zinc-200 dark:border-zinc-800" />
+    <a
+      cdkMenuItem
+      routerLink="/settings"
+      class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm hover:bg-zinc-100 focus-visible:bg-zinc-100 focus-visible:outline-none dark:hover:bg-zinc-800 dark:focus-visible:bg-zinc-800"
+    >
+      Settings
+    </a>
+    @if (store.isAdmin()) {
+      <a
+        cdkMenuItem
+        routerLink="/admin"
+        class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm hover:bg-zinc-100 focus-visible:bg-zinc-100 focus-visible:outline-none dark:hover:bg-zinc-800 dark:focus-visible:bg-zinc-800"
+      >
+        Admin
+      </a>
+    }
+    <button
+      cdkMenuItem
+      type="button"
+      (cdkMenuItemTriggered)="logout()"
+      class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm hover:bg-zinc-100 focus-visible:bg-zinc-100 focus-visible:outline-none dark:hover:bg-zinc-800 dark:focus-visible:bg-zinc-800"
+    >
+      Sign out
+    </button>
+  </div>
+</ng-template>

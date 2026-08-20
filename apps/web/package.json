@@ -1,0 +1,34 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "dev": "ng serve",
+    "build": "ng build",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit"
+  },
+  "dependencies": {
+    "@angular/cdk": "^22.1.2",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/forms": "^22.1.0",
+    "@angular/platform-browser": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@feedbackhub/auth": "workspace:*",
+    "@feedbackhub/types": "workspace:*",
+    "keycloak-js": "^26.2.4",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.1.4",
+    "@angular/cli": "^22.1.4",
+    "@angular/compiler-cli": "^22.1.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2"
+  }
+}
