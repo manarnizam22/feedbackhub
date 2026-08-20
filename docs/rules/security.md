@@ -51,6 +51,15 @@ The matrix:
 - User text (descriptions, comments) is stored raw, rendered as text by Angular's
   default sanitization — never through `innerHTML`.
 
+## SSE exception
+
+`EventSource` cannot send an Authorization header, so `GET /events` is the one
+route outside the global guard: it verifies the SAME Keycloak JWT through the
+shared verify path, passed as `?access_token=`. Exposure is bounded by the
+short token lifetime and the client rotating the connection before expiry;
+notification events are filtered server-side per recipient. Every other route
+stays behind the guard.
+
 ## Dev-realm conveniences
 
 The dev/test realm enables direct access grants (password grant) on the SPA

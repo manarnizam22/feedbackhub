@@ -90,6 +90,15 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
 - ✅ Web shell: Keycloak login (PKCE, login-required), themed IdP login page,
   token interceptor, single-bootstrap signal store with visible theme
   preference, accessible UI primitives (CDK dialog/menu), lazy routes
+- ✅ User journeys: request list (search/filter/sort/paginate, inline optimistic
+  voting), detail with discussion (comment CRUD, moderation), submit/edit with
+  field-level validation, delete with confirm
+- ✅ Settings & admin: profile + preferences (theme applies live), account
+  deactivation; admin moderation queue, taxonomy management, app settings,
+  `compactList` feature flag; triage (status/pin) on the detail page
+- ✅ Realtime: SSE change stream (lists/detail refresh live) + in-app
+  notifications with unread bell — events emitted only for committed
+  transactions, integration-tested
 
 ## Git workflow and commit convention
 
