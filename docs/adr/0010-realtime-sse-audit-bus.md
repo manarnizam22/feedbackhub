@@ -29,9 +29,11 @@ SSE. The emit point is the audited-transaction wrapper: after commit, the
 mutation's event (action, entity, actor) goes onto an in-process event bus; the
 SSE gateway broadcasts change events to all connected clients (which refetch
 what they're showing) and routes notification events to the affected user only.
-Notification rows (author of the request, on votes and comments, honoring the
-`notifyOnComment` preference, never for one's own actions) are written inside
-the same transaction as the mutation; the bell reads `GET /me/notifications`.
+Notification rows are written inside the same transaction as the mutation and
+pushed only after commit: request authors are notified on votes and comments
+(honoring the `notifyOnComment` preference), every user except the author is
+notified when a new request lands, and one's own actions never notify oneself.
+The bell reads `GET /me/notifications`.
 
 Because `EventSource` cannot send an Authorization header, the SSE route
 accepts the access token as a query parameter — scoped to that route only and

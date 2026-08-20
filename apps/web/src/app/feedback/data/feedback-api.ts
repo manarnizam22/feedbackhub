@@ -67,6 +67,10 @@ export class FeedbackApi {
     return this.http.delete<void>(`${this.base}/comments/${id}`);
   }
 
+  approveComment(id: string): Observable<Comment> {
+    return this.http.post<Comment>(`${this.base}/comments/${id}/approve`, {});
+  }
+
   setStatus(id: string, statusId: string): Observable<RequestDetail> {
     return this.http.patch<RequestDetail>(`${this.base}/requests/${id}/status`, { statusId });
   }

@@ -4,6 +4,7 @@ import type { ListRequestsResponse, RequestListItem } from '@feedbackhub/types';
 
 import { ApiError } from '@core/api-error';
 import { BootstrapStore } from '@core/bootstrap-store';
+import { live } from '@core/live';
 
 import { FeedbackApi } from './feedback-api';
 
@@ -37,6 +38,23 @@ export class RequestsStore {
   });
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private liveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    live.onChange((event) => {
+      if (event.entityType !== 'request' && event.entityType !== 'comment') {
+        return;
+      }
+      if (this.liveTimer) {
+        clearTimeout(this.liveTimer);
+      }
+      this.liveTimer = setTimeout(() => {
+        if (this.state() === 'ready') {
+          void this.load();
+        }
+      }, 500);
+    });
+  }
 
   async load(): Promise<void> {
     this.state.set('loading');

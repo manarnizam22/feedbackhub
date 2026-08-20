@@ -57,7 +57,7 @@ export class RequestsController {
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(CreateRequestSchema)) body: CreateRequest,
   ) {
-    return this.requests.create(user.id, body);
+    return this.requests.create(user.id, user.displayName, body);
   }
 
   @Get(':id')
@@ -96,7 +96,7 @@ export class RequestsController {
     @Param('id', IdParam) id: string,
     @Body(new ZodValidationPipe(SetStatusSchema)) body: SetStatus,
   ) {
-    return this.requests.setStatus(user.id, ability, id, body.statusId);
+    return this.requests.setStatus(user.id, user.displayName, ability, id, body.statusId);
   }
 
   @Put(':id/pin')
@@ -107,7 +107,7 @@ export class RequestsController {
     @CurrentAbility() ability: AppAbility,
     @Param('id', IdParam) id: string,
   ) {
-    return this.requests.setPinned(user.id, ability, id, true);
+    return this.requests.setPinned(user.id, user.displayName, ability, id, true);
   }
 
   @Delete(':id/pin')
@@ -118,6 +118,6 @@ export class RequestsController {
     @CurrentAbility() ability: AppAbility,
     @Param('id', IdParam) id: string,
   ) {
-    return this.requests.setPinned(user.id, ability, id, false);
+    return this.requests.setPinned(user.id, user.displayName, ability, id, false);
   }
 }

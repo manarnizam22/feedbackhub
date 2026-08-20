@@ -96,12 +96,13 @@
         <select
           id="defaultStatus"
           class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-          [value]="defaultStatus()"
           (change)="defaultStatus.set($any($event.target).value)"
         >
-          <option value="">None</option>
+          <option value="" [selected]="defaultStatus() === ''">None</option>
           @for (status of bootstrap.statuses(); track status.id) {
-            <option [value]="status.id">{{ status.name }}</option>
+            <option [value]="status.id" [selected]="defaultStatus() === status.id">
+              {{ status.name }}
+            </option>
           }
         </select>
       </fh-form-field>
@@ -109,12 +110,13 @@
         <select
           id="defaultCategory"
           class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-          [value]="defaultCategory()"
           (change)="defaultCategory.set($any($event.target).value)"
         >
-          <option value="">None</option>
+          <option value="" [selected]="defaultCategory() === ''">None</option>
           @for (category of bootstrap.categories(); track category.id) {
-            <option [value]="category.id">{{ category.name }}</option>
+            <option [value]="category.id" [selected]="defaultCategory() === category.id">
+              {{ category.name }}
+            </option>
           }
         </select>
       </fh-form-field>

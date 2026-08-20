@@ -33,6 +33,18 @@ _(updated as features merge — each line added when the thing actually works)_
   real tokens — anonymous/non-owner/owner/admin per mutating endpoint, with 404
   where 403 would leak existence.
 
+- **Settings & admin** — user settings (profile, theme with immediate visible
+  effect, language, default sort/filters, notification preference, account
+  deletion-as-deactivation) and the admin area: moderation queue with
+  approve/reject, category/status management with retire and default-status
+  swap, application settings (registration policy, approval toggle, rate
+  limit), and the `compactList` feature flag that visibly changes the list.
+- **Realtime & notifications** — SSE stream fed by the audit event bus (events
+  exist only for committed transactions): lists and detail refresh live;
+  in-app notifications (votes and comments to the request author, new requests
+  to everyone else) with bell, unread badge and mark-read. Single-replica
+  fan-out by design; Redis pub/sub is the documented scale-out (ADR-0010).
+
 ## What's out, on purpose
 
 Decided up front, with the reasoning:

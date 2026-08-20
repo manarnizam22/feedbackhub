@@ -25,6 +25,9 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey(),
   email: text('email').notNull().unique(),
   displayName: text('display_name').notNull(),
+  // mirrored from the verified token on every request — the DB needs to know
+  // recipients for admin-targeted notifications; Keycloak stays the authority
+  isAdmin: boolean('is_admin').notNull().default(false),
   createdAt,
   updatedAt,
   deletedAt,
@@ -144,6 +147,26 @@ export const appSettings = pgTable('app_settings', {
   value: jsonb('value').notNull(),
   updatedAt,
 });
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    type: text('type').notNull(),
+    actorName: text('actor_name').notNull(),
+    requestId: uuid('request_id')
+      .notNull()
+      .references(() => feedbackRequests.id),
+    requestTitle: text('request_title').notNull(),
+    detail: text('detail'),
+    read: boolean('read').notNull().default(false),
+    createdAt,
+  },
+  (t) => [index('notifications_user_idx').on(t.userId, t.read)],
+);
 
 export const auditLog = pgTable(
   'audit_log',

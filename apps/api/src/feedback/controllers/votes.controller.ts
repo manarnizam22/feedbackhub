@@ -18,7 +18,7 @@ export class VotesController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Vote for a request (idempotent)' })
   cast(@CurrentUser() user: AuthenticatedUser, @Param('id', IdParam) id: string) {
-    return this.votes.cast(user.id, id);
+    return this.votes.cast(user.id, id, user.displayName);
   }
 
   @Delete()

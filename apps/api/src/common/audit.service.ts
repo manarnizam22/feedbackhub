@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { auditLog, type Db } from '@feedbackhub/db';
 
 import { DB } from './db.module.js';
+import { eventBus } from './event-bus.js';
 
 export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
@@ -26,9 +27,10 @@ export class AuditService {
     entry: AuditEntry | ((result: T) => AuditEntry | null),
     fn: (tx: Tx) => Promise<T>,
   ): Promise<T> {
-    return this.db.transaction(async (tx) => {
-      const result = await fn(tx);
-      const resolved = typeof entry === 'function' ? entry(result) : entry;
+    let committed: AuditEntry | null = null;
+    const result = await this.db.transaction(async (tx) => {
+      const value = await fn(tx);
+      const resolved = typeof entry === 'function' ? entry(value) : entry;
       if (resolved) {
         await tx.insert(auditLog).values({
           actorId: resolved.actorId,
@@ -37,8 +39,20 @@ export class AuditService {
           entityId: resolved.entityId,
           data: resolved.data ?? null,
         });
+        committed = resolved;
       }
-      return result;
+      return value;
     });
+    if (committed) {
+      const entryValue = committed as AuditEntry;
+      eventBus.emitChange({
+        kind: 'change',
+        action: entryValue.action,
+        entityType: entryValue.entityType,
+        entityId: entryValue.entityId,
+        actorId: entryValue.actorId,
+      });
+    }
+    return result;
   }
 }

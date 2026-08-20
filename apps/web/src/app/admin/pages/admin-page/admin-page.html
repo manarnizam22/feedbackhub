@@ -37,12 +37,27 @@
                 </p>
                 <p class="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{{ comment.body }}</p>
               </div>
-              <div class="flex shrink-0 gap-2">
-                <button fh-button type="button" (click)="approve(comment.id)">Approve</button>
-                <button fh-button variant="danger" type="button" (click)="reject(comment.id)">
-                  Reject
+              <span
+                class="inline-flex shrink-0 self-center overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+                role="group"
+                aria-label="Moderate comment"
+              >
+                <button
+                  type="button"
+                  class="px-3 py-1.5 text-sm font-medium text-green-700 transition-colors hover:bg-green-50 focus-visible:bg-green-50 focus-visible:outline-none dark:text-green-400 dark:hover:bg-green-950/40"
+                  (click)="approve(comment.id)"
+                >
+                  ✓ Approve
                 </button>
-              </div>
+                <span class="w-px bg-zinc-200 dark:bg-zinc-700" aria-hidden="true"></span>
+                <button
+                  type="button"
+                  class="px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:bg-red-50 focus-visible:outline-none dark:text-red-400 dark:hover:bg-red-950/40"
+                  (click)="reject(comment.id)"
+                >
+                  ✕ Reject
+                </button>
+              </span>
             </li>
           }
         </ul>

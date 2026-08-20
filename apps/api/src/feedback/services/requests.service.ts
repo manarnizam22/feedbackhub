@@ -21,6 +21,7 @@ import type {
 
 import { AuditService, type Tx } from '../../common/audit.service.js';
 import { DB, type Db } from '../../common/db.module.js';
+import { NotificationsService } from '../../notifications/services/notifications.service.js';
 import { SettingsService } from '../../settings/services/settings.service.js';
 
 export function escapeLike(input: string): string {
@@ -33,6 +34,7 @@ export class RequestsService {
     @Inject(DB) private readonly db: Db,
     @Inject(SettingsService) private readonly settings: SettingsService,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(NotificationsService) private readonly notifications: NotificationsService,
   ) {}
 
   private voteCount() {
@@ -172,10 +174,18 @@ export class RequestsService {
     };
   }
 
-  async create(userId: string, input: CreateRequest): Promise<RequestDetail> {
+  async create(userId: string, actorName: string, input: CreateRequest): Promise<RequestDetail> {
     const limit = await this.settings.getNumberSetting('submissions_per_user_per_day', 10);
-    const created = await this.audit.transaction<string>(
-      (id) => ({ actorId: userId, action: 'request.create', entityType: 'request', entityId: id }),
+    const outcome = await this.audit.transaction<{
+      id: string;
+      fanout: Array<{ userId: string; notification: import('@feedbackhub/types').Notification }>;
+    }>(
+      (result) => ({
+        actorId: userId,
+        action: 'request.create',
+        entityType: 'request',
+        entityId: result.id,
+      }),
       async (tx) => {
         const todayCount = await tx
           .select({ n: count() })
@@ -214,10 +224,20 @@ export class RequestsService {
             authorId: userId,
           })
           .returning({ id: feedbackRequests.id });
-        return inserted[0]!.id;
+        const id = inserted[0]!.id;
+        const fanout = await this.notifications.createForAllUsersInTx(tx, userId, {
+          type: 'new_request',
+          actorName,
+          requestId: id,
+          requestTitle: input.title,
+        });
+        return { id, fanout };
       },
     );
-    return this.detail(userId, created);
+    for (const entry of outcome.fanout) {
+      this.notifications.pushAfterCommit(entry.userId, entry.notification);
+    }
+    return this.detail(userId, outcome.id);
   }
 
   async update(
@@ -269,6 +289,7 @@ export class RequestsService {
 
   async setStatus(
     userId: string,
+    actorName: string,
     ability: AppAbility,
     id: string,
     statusId: string,
@@ -276,7 +297,9 @@ export class RequestsService {
     if (!ability.can('setStatus', 'Request')) {
       throw new ForbiddenException('Admin role required');
     }
-    await this.audit.transaction(
+    const outcome = await this.audit.transaction<{
+      fanout: Array<{ userId: string; notification: import('@feedbackhub/types').Notification }>;
+    }>(
       {
         actorId: userId,
         action: 'request.set_status',
@@ -285,9 +308,9 @@ export class RequestsService {
         data: { statusId },
       },
       async (tx) => {
-        await this.getLiveRow(tx, id);
+        const row = await this.getLiveRow(tx, id);
         const status = await tx
-          .select({ id: statuses.id })
+          .select({ id: statuses.id, name: statuses.name })
           .from(statuses)
           .where(and(eq(statuses.id, statusId), eq(statuses.active, true)))
           .limit(1);
@@ -301,16 +324,41 @@ export class RequestsService {
           .update(feedbackRequests)
           .set({ statusId, updatedAt: new Date() })
           .where(eq(feedbackRequests.id, id));
+        const titleRows = await tx
+          .select({ title: feedbackRequests.title })
+          .from(feedbackRequests)
+          .where(eq(feedbackRequests.id, id))
+          .limit(1);
+        const fanout = await this.notifications.createForAllUsersInTx(tx, userId, {
+          type: 'status_change',
+          actorName,
+          requestId: id,
+          requestTitle: titleRows[0]!.title,
+          detail: status[0].name,
+        });
+        return { fanout };
       },
     );
+    for (const entry of outcome.fanout) {
+      this.notifications.pushAfterCommit(entry.userId, entry.notification);
+    }
     return this.detail(userId, id);
   }
 
-  async setPinned(userId: string, ability: AppAbility, id: string, pinned: boolean): Promise<void> {
+  async setPinned(
+    userId: string,
+    actorName: string,
+    ability: AppAbility,
+    id: string,
+    pinned: boolean,
+  ): Promise<void> {
     if (!ability.can('pin', 'Request')) {
       throw new ForbiddenException('Admin role required');
     }
-    await this.audit.transaction(
+    const outcome = await this.audit.transaction<{
+      recipientId: string | null;
+      notification: import('@feedbackhub/types').Notification | null;
+    }>(
       {
         actorId: userId,
         action: pinned ? 'request.pin' : 'request.unpin',
@@ -318,13 +366,32 @@ export class RequestsService {
         entityId: id,
       },
       async (tx) => {
-        await this.getLiveRow(tx, id);
+        const row = await this.getLiveRow(tx, id);
         await tx
           .update(feedbackRequests)
           .set({ pinned, updatedAt: new Date() })
           .where(eq(feedbackRequests.id, id));
+        if (!pinned || row.authorId === userId) {
+          return { recipientId: null, notification: null };
+        }
+        const titleRows = await tx
+          .select({ title: feedbackRequests.title })
+          .from(feedbackRequests)
+          .where(eq(feedbackRequests.id, id))
+          .limit(1);
+        const notification = await this.notifications.createInTx(tx, {
+          recipientId: row.authorId,
+          type: 'pin',
+          actorName,
+          requestId: id,
+          requestTitle: titleRows[0]!.title,
+        });
+        return { recipientId: row.authorId, notification };
       },
     );
+    if (outcome.recipientId) {
+      this.notifications.pushAfterCommit(outcome.recipientId, outcome.notification);
+    }
   }
 
   private async getLiveRow(executor: Pick<Db, 'select'> | Tx, id: string) {

@@ -6,6 +6,7 @@ import type { Comment, PendingComment } from '@feedbackhub/types';
 
 import { AuditService, type Tx } from '../../common/audit.service.js';
 import { DB, type Db } from '../../common/db.module.js';
+import { NotificationsService } from '../../notifications/services/notifications.service.js';
 import { SettingsService } from '../../settings/services/settings.service.js';
 
 @Injectable()
@@ -14,24 +15,37 @@ export class CommentsService {
     @Inject(DB) private readonly db: Db,
     @Inject(SettingsService) private readonly settings: SettingsService,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(NotificationsService) private readonly notifications: NotificationsService,
   ) {}
 
-  async create(userId: string, requestId: string, body: string): Promise<Comment> {
+  async create(
+    userId: string,
+    actorName: string,
+    requestId: string,
+    body: string,
+  ): Promise<Comment> {
     const requiresApproval = await this.settings.getBooleanSetting(
       'comments_require_approval',
       false,
     );
-    const id = await this.audit.transaction<string>(
-      (commentId) => ({
+    const outcome = await this.audit.transaction<{
+      commentId: string;
+      pushes: Array<{ userId: string; notification: import('@feedbackhub/types').Notification }>;
+    }>(
+      (result) => ({
         actorId: userId,
         action: 'comment.create',
         entityType: 'comment',
-        entityId: commentId,
+        entityId: result.commentId,
         data: { requestId },
       }),
       async (tx) => {
         const request = await tx
-          .select({ id: feedbackRequests.id })
+          .select({
+            id: feedbackRequests.id,
+            authorId: feedbackRequests.authorId,
+            title: feedbackRequests.title,
+          })
           .from(feedbackRequests)
           .where(and(eq(feedbackRequests.id, requestId), isNull(feedbackRequests.deletedAt)))
           .limit(1);
@@ -42,10 +56,42 @@ export class CommentsService {
           .insert(comments)
           .values({ requestId, authorId: userId, body, approved: !requiresApproval })
           .returning({ id: comments.id });
-        return inserted[0]!.id;
+        const pushes: Array<{
+          userId: string;
+          notification: import('@feedbackhub/types').Notification;
+        }> = [];
+        const author = request[0].authorId;
+        const wantsIt =
+          author !== userId &&
+          (await this.notifications.recipientAllowsCommentNotifications(tx, author));
+        if (wantsIt) {
+          const notification = await this.notifications.createInTx(tx, {
+            recipientId: author,
+            type: 'comment',
+            actorName,
+            requestId,
+            requestTitle: request[0].title,
+          });
+          if (notification) {
+            pushes.push({ userId: author, notification });
+          }
+        }
+        if (requiresApproval) {
+          const adminPushes = await this.notifications.createForAdminsInTx(tx, userId, {
+            type: 'comment_pending',
+            actorName,
+            requestId,
+            requestTitle: request[0].title,
+          });
+          pushes.push(...adminPushes);
+        }
+        return { commentId: inserted[0]!.id, pushes };
       },
     );
-    return this.getById(id);
+    for (const push of outcome.pushes) {
+      this.notifications.pushAfterCommit(push.userId, push.notification);
+    }
+    return this.getById(outcome.commentId);
   }
 
   async update(userId: string, ability: AppAbility, id: string, body: string): Promise<Comment> {
@@ -62,14 +108,18 @@ export class CommentsService {
     return this.getById(id);
   }
 
-  async remove(userId: string, ability: AppAbility, id: string): Promise<void> {
-    await this.audit.transaction<boolean>(
-      (moderation) => ({
+  async remove(userId: string, actorName: string, ability: AppAbility, id: string): Promise<void> {
+    const outcome = await this.audit.transaction<{
+      moderation: boolean;
+      recipientId: string | null;
+      notification: import('@feedbackhub/types').Notification | null;
+    }>(
+      (result) => ({
         actorId: userId,
         action: 'comment.delete',
         entityType: 'comment',
         entityId: id,
-        data: { moderation },
+        data: { moderation: result.moderation },
       }),
       async (tx) => {
         const row = await this.getLiveRow(tx, id);
@@ -80,9 +130,24 @@ export class CommentsService {
           .update(comments)
           .set({ deletedAt: new Date(), deletedBy: userId })
           .where(eq(comments.id, id));
-        return row.authorId !== userId;
+        const moderation = row.authorId !== userId;
+        if (moderation && !row.approved) {
+          const context = await this.requestContext(tx, row.requestId);
+          const notification = await this.notifications.createInTx(tx, {
+            recipientId: row.authorId,
+            type: 'comment_rejected',
+            actorName,
+            requestId: row.requestId,
+            requestTitle: context.title,
+          });
+          return { moderation, recipientId: row.authorId, notification };
+        }
+        return { moderation, recipientId: null, notification: null };
       },
     );
+    if (outcome.recipientId) {
+      this.notifications.pushAfterCommit(outcome.recipientId, outcome.notification);
+    }
   }
 
   async listPending(ability: AppAbility): Promise<PendingComment[]> {
@@ -106,20 +171,43 @@ export class CommentsService {
     return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
   }
 
-  async approve(userId: string, ability: AppAbility, id: string): Promise<Comment> {
+  async approve(
+    userId: string,
+    actorName: string,
+    ability: AppAbility,
+    id: string,
+  ): Promise<Comment> {
     if (!ability.can('approve', 'Comment')) {
       throw new ForbiddenException('Admin role required');
     }
-    await this.audit.transaction(
+    const outcome = await this.audit.transaction<{
+      recipientId: string | null;
+      notification: import('@feedbackhub/types').Notification | null;
+    }>(
       { actorId: userId, action: 'comment.approve', entityType: 'comment', entityId: id },
       async (tx) => {
-        await this.getLiveRow(tx, id);
+        const row = await this.getLiveRow(tx, id);
         await tx
           .update(comments)
           .set({ approved: true, updatedAt: new Date() })
           .where(eq(comments.id, id));
+        if (row.authorId === userId) {
+          return { recipientId: null, notification: null };
+        }
+        const context = await this.requestContext(tx, row.requestId);
+        const notification = await this.notifications.createInTx(tx, {
+          recipientId: row.authorId,
+          type: 'comment_approved',
+          actorName,
+          requestId: row.requestId,
+          requestTitle: context.title,
+        });
+        return { recipientId: row.authorId, notification };
       },
     );
+    if (outcome.recipientId) {
+      this.notifications.pushAfterCommit(outcome.recipientId, outcome.notification);
+    }
     return this.getById(id);
   }
 
@@ -152,7 +240,12 @@ export class CommentsService {
 
   private async getLiveRow(executor: Pick<Db, 'select'> | Tx, id: string) {
     const rows = await executor
-      .select({ id: comments.id, authorId: comments.authorId })
+      .select({
+        id: comments.id,
+        authorId: comments.authorId,
+        requestId: comments.requestId,
+        approved: comments.approved,
+      })
       .from(comments)
       .where(and(eq(comments.id, id), isNull(comments.deletedAt)))
       .limit(1);
@@ -160,5 +253,14 @@ export class CommentsService {
       throw new NotFoundException('Comment not found');
     }
     return rows[0];
+  }
+
+  private async requestContext(executor: Pick<Db, 'select'> | Tx, requestId: string) {
+    const rows = await executor
+      .select({ title: feedbackRequests.title, authorId: feedbackRequests.authorId })
+      .from(feedbackRequests)
+      .where(eq(feedbackRequests.id, requestId))
+      .limit(1);
+    return rows[0]!;
   }
 }

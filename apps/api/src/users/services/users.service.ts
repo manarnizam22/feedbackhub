@@ -9,6 +9,7 @@ interface ShadowUser {
   id: string;
   email: string;
   displayName: string;
+  isAdmin: boolean;
 }
 
 @Injectable()
@@ -25,10 +26,21 @@ export class UsersService {
   async ensureShadow(user: ShadowUser) {
     await this.db
       .insert(users)
-      .values({ id: user.id, email: user.email, displayName: user.displayName })
+      .values({
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        isAdmin: user.isAdmin,
+      })
       .onConflictDoUpdate({
         target: users.id,
-        set: { email: user.email, deletedAt: null, deletedBy: null, updatedAt: new Date() },
+        set: {
+          email: user.email,
+          isAdmin: user.isAdmin,
+          deletedAt: null,
+          deletedBy: null,
+          updatedAt: new Date(),
+        },
       });
   }
 
