@@ -19,6 +19,12 @@ _(updated as features merge — each line added when the thing actually works)_
   problem-details errors, OpenAPI served at /docs, and the single `GET
 /bootstrap` payload (ADR-0009). Integration-tested with real tokens — no
   mocked auth anywhere.
+- **Web shell** — Angular 22 (zoneless, signals) with authentication fully
+  delegated: keycloak-js redirect flow with PKCE, no anonymous state, tokens
+  attached per-request with refresh. One bootstrap request feeds a signal store
+  (ADR-0009); the theme preference applies visibly. The Keycloak login page
+  carries a custom theme matching the app. Accessible primitives (native-button
+  styling, CDK focus-trapped dialogs, keyboard menus) underpin every screen.
 - **Feedback API** — the product core: request CRUD with one joined list query
   (filter, search, sort, paginate, pinned-first, vote/comment counts, my-vote),
   idempotent votes, comments with the approval setting honored, admin triage
