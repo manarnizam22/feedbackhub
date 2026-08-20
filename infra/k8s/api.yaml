@@ -31,7 +31,10 @@ spec:
             - name: API_AUDIENCE
               value: feedbackhub-api
             - name: DATABASE_URL
-              value: postgres://feedbackhub:feedbackhub-dev@postgres:5432/feedbackhub
+              valueFrom:
+                secretKeyRef:
+                  name: feedbackhub-secrets
+                  key: DATABASE_URL
           ports:
             - containerPort: 3010
           readinessProbe:

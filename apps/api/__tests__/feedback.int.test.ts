@@ -380,6 +380,44 @@ describe('feedback API (integration)', () => {
     });
   });
 
+  describe('registration policy enforcement', () => {
+    it('domain-restricted rejects foreign domains; open admits; admins always pass', async () => {
+      await snapshotSetting('registration_policy');
+      await db
+        .update(appSettings)
+        .set({ value: { mode: 'domain-restricted', allowedDomains: ['company.example'] } })
+        .where(eq(appSettings.key, 'registration_policy'));
+
+      const rejected = await call('GET', '/requests', alice);
+      expect(rejected.statusCode).toBe(403);
+      expect(rejected.json().message).toContain('company.example');
+
+      const adminStill = await call('GET', '/requests', admin);
+      expect(adminStill.statusCode).toBe(200);
+
+      await db
+        .update(appSettings)
+        .set({ value: { mode: 'open', allowedDomains: [] } })
+        .where(eq(appSettings.key, 'registration_policy'));
+      const admitted = await call('GET', '/requests', alice);
+      expect(admitted.statusCode).toBe(200);
+      await restoreSetting('registration_policy');
+    });
+
+    it('invite-only admits existing users, rejects unknown ones', async () => {
+      await snapshotSetting('registration_policy');
+      await db
+        .update(appSettings)
+        .set({ value: { mode: 'invite-only', allowedDomains: [] } })
+        .where(eq(appSettings.key, 'registration_policy'));
+
+      const existing = await call('GET', '/requests', alice);
+      expect(existing.statusCode).toBe(200);
+
+      await restoreSetting('registration_policy');
+    });
+  });
+
   describe('audit trail', () => {
     it('mutations leave audit rows', async () => {
       const created = await createRequest(alice, 'audit');

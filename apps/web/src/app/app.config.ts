@@ -26,6 +26,9 @@ export const appConfig: ApplicationConfig = {
       const notifications = inject(NotificationsStore);
       await initKeycloak();
       await bootstrap.load();
+      if (bootstrap.deniedMessage()) {
+        return;
+      }
       live.start();
       await notifications.load();
     }),

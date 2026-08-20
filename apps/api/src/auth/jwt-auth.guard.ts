@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { defineAbilityFor } from '@feedbackhub/auth';
 
+import { RegistrationPolicyService } from '../users/services/registration-policy.service.js';
 import { UsersService } from '../users/services/users.service.js';
 import type { AuthenticatedRequest } from './current-user.decorator.js';
 import { IS_PUBLIC } from './public.decorator.js';
@@ -22,6 +23,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     @Inject(Reflector) private readonly reflector: Reflector,
     @Inject(UsersService) private readonly users: UsersService,
+    @Inject(RegistrationPolicyService) private readonly registration: RegistrationPolicyService,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -41,6 +43,7 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or invalid bearer token');
     }
 
+    await this.registration.assertAdmitted(user);
     await this.users.ensureShadow(user);
 
     req.user = user;

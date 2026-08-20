@@ -26,4 +26,7 @@ spec:
           command: ['sh', '-c', 'pnpm db:migrate && pnpm db:seed']
           env:
             - name: DATABASE_URL
-              value: postgres://feedbackhub:feedbackhub-dev@postgres:5432/feedbackhub
+              valueFrom:
+                secretKeyRef:
+                  name: feedbackhub-secrets
+                  key: DATABASE_URL

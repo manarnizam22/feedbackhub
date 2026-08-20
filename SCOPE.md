@@ -83,9 +83,14 @@ Decided up front, with the reasoning:
 - **"Email notification preferences"** — I read this as the preference being the
   requirement, not a mail pipeline; asked in the same email whether a local
   mail-catcher was expected. See "What's out" above either way.
-- **Registration policy (open / invite-only / domain-restricted)** — read as
-  admin configuration that drives the identity provider's realm behavior, not as
-  custom registration code. Authentication stays entirely delegated (ADR-0002).
+- **Registration policy (open / invite-only / domain-restricted)** — enforced
+  at the application gate, not inside the identity provider: Keycloak keeps
+  authenticating anyone it knows (the app deliberately holds no IdP admin
+  credentials — the integration stays read-only per ADR-0002), and the API
+  decides admission — domain-restricted rejects foreign email domains,
+  invite-only admits only users who already have an account here; admins
+  always pass so the policy cannot lock out its own operators.
+  Integration-tested for all three modes.
 - **"Retiring" a category** — read as deactivation, not deletion: existing requests
   keep their category; the retired one stops being offered for new submissions.
 

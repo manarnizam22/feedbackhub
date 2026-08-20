@@ -96,7 +96,7 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
 
 - ✅ Compose stack: Postgres + Keycloak, realm auto-imported, dev users log in;
   rebuilt-from-scratch verified
-- ✅ Database: schema (9 tables, soft-delete + audit model), SQL migrations,
+- ✅ Database: schema (10 tables, soft-delete + audit model), SQL migrations,
   idempotent seed; vote-uniqueness and single-default-status enforced by
   constraints (probed, not assumed)
 - ✅ API skeleton: global JWT guard (Keycloak JWKS — signature, issuer,
@@ -121,8 +121,11 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
   transactions, integration-tested
 - ✅ Kubernetes: images built and cluster-verified on kind (issuer/JWKS split
   proven — in-cluster token accepted by in-cluster API); migrations as a Job
-- ✅ E2E: 10 Playwright tests — user journey, admin triage, keyboard-only pass
-  — rerun-deterministic
+- ✅ E2E: 7 Playwright journey tests (+3 auth/data setup steps) — user journey,
+  admin triage, keyboard-only pass — rerun-deterministic
+- ✅ Registration policy enforced at the API gate: domain-restricted rejects
+  foreign email domains, invite-only admits only existing users; admins always
+  pass — integration-tested
 - ⚠️ Known limits (deliberate, reasoned in [SCOPE.md](SCOPE.md)): no email
   delivery, single API replica for SSE, audit log write-only, English only
 
@@ -131,8 +134,10 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
 `main` plus `feat/<name>` feature branches, merged into `main` with merge commits —
 never squashed, so the history keeps its story.
 
-Conventional Commits (`feat(api): ...`, `fix(web): ...`, `docs: ...`), each with an
-AI-attribution trailer marking how the change was authored:
+Conventional Commits (`feat(api): ...`, `fix(web): ...`, `docs: ...`) with an
+AI-attribution trailer marking how the change was authored (a handful of
+mid-crunch commits missed the trailer — treat untrailed feature commits as
+`heavy`):
 
 ```
 AI-Assisted: heavy | partial | none

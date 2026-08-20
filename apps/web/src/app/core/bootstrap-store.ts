@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { defineAbilityFor } from '@feedbackhub/auth';
 import type { BootstrapResponse } from '@feedbackhub/types';
 
+import { ApiError } from './api-error';
 import { env } from './env';
 import { applyTheme } from './theme';
 
@@ -39,10 +40,22 @@ export class BootstrapStore {
       .join('');
   });
 
+  readonly deniedMessage = signal<string | null>(null);
+
   async load(): Promise<void> {
-    const data = await firstValueFrom(this.http.get<BootstrapResponse>(`${env.apiUrl}/bootstrap`));
-    this.state.set(data);
-    applyTheme(data.preferences.theme);
+    try {
+      const data = await firstValueFrom(
+        this.http.get<BootstrapResponse>(`${env.apiUrl}/bootstrap`),
+      );
+      this.state.set(data);
+      applyTheme(data.preferences.theme);
+    } catch (error) {
+      if (error instanceof ApiError && error.problem.status === 403) {
+        this.deniedMessage.set(error.message);
+        return;
+      }
+      throw error;
+    }
   }
 
   applyPreferences(preferences: BootstrapResponse['preferences']): void {

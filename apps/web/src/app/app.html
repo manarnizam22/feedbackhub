@@ -45,7 +45,17 @@
 </header>
 
 <main class="mx-auto max-w-5xl px-4 py-6">
-  <router-outlet />
+  @if (store.deniedMessage(); as denied) {
+    <div class="flex flex-col items-center gap-4 py-20 text-center" role="alert">
+      <h1 class="text-xl font-semibold">This account can't access FeedbackHub</h1>
+      <p class="max-w-md text-sm text-zinc-500">{{ denied }}</p>
+      <button fh-button variant="ghost" type="button" (click)="logout()">
+        Sign in with a different account
+      </button>
+    </div>
+  } @else {
+    <router-outlet />
+  }
 </main>
 
 <fh-toasts />
