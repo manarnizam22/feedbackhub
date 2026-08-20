@@ -7,8 +7,10 @@ conflict, pick one and flag the other.
 ## Naming
 
 - Files: kebab-case (`feedback-list.store.ts`, `votes.service.ts`).
-- Angular: standalone components, `*.component.ts` / `*.store.ts` / `*.routes.ts`
-  suffixes; selectors prefixed `fh-`.
+- Angular: standalone components, v22 CLI naming (no `.component` suffix —
+  `request-list.ts` exports `RequestList`); stores as `*-store.ts`; shared
+  primitives in `app/ui/` with `fh-` selectors; feature folders per domain
+  (`feedback/`, `settings/`, `admin/`), `core/` for auth/http/bootstrap.
 - Nest: **a module is a domain (bounded context), never a wrapper per
   entity/table/operation.** One module per domain — `feedback/`, `taxonomy/`,
   `settings/`, `users/` — each holding as many controllers/services as the

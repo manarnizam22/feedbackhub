@@ -16,3 +16,5 @@ Thumbs.db
 
 # private working notes (plans in progress, raw AI logs) — curated content ships via AI_COLLABORATION.md
 .notes/
+
+apps/web/.vscode/

@@ -103,6 +103,36 @@ break my own "no trail for failed transactions" requirement. The per-mutation
 _declaration_ (action name, entity, payload) stays visible in the service, and
 that visibility is what makes the trail reviewable. I accepted that boundary.
 
+### 3. Session revocation — a bug I found, and a first fix that wasn't enough
+
+While smoke-testing the shell I terminated my own active session from the
+Keycloak admin console and noticed the app just kept working. I reported it to
+the AI the way I'd file a ticket: actual behavior, expected behavior, and the
+desired flow — _"Keycloak session terminated → application session invalidated
+→ next protected request fails → frontend logs the user out → user is
+redirected to login."_
+
+The first response explained the mechanics honestly — stateless JWTs cannot be
+revoked mid-flight, only outlived; the API validates signatures, it doesn't
+phone Keycloak per request — and shipped a three-layer fix: the session-status
+iframe for live detection, 401-handling in the HTTP interceptor, and
+login-redirect on failed token refresh.
+
+**I retested and it still failed my scenario** — logout only happened after a
+page refresh. The iframe path depends on browser cookie policy, which is
+exactly the kind of thing that works in a demo and dies in the field. The
+second iteration added a session heartbeat: a forced token refresh every ten
+seconds that round-trips to Keycloak, so a terminated session fails the very
+next beat regardless of any cookie behavior — deterministic ≤10s revocation,
+at the cost of one lightweight call per tab. That trade-off (versus per-request
+introspection, which would make every API call stateful) is documented, and
+the residual window — an already-issued access token stays valid until its
+short expiry — is stated rather than hidden.
+
+The gap between first output and shipped was closed by manual retesting, not
+by more generation. If I had accepted the first plausible fix, the bug would
+have survived to the reviewer's desk.
+
 _(further examples added as the corresponding parts get built)_
 
 ## What I replaced even though it worked

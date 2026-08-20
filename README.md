@@ -46,6 +46,7 @@ pnpm docker:up     # Postgres :5432 + Keycloak :8080, realm auto-imported
 pnpm db:migrate    # apply SQL migrations
 pnpm db:seed       # deterministic demo data (idempotent — safe to re-run)
 pnpm --filter @feedbackhub/api dev   # API on :3000, OpenAPI at /docs
+pnpm --filter web dev                # Angular SPA on :4200
 ```
 
 - Keycloak admin console: [http://localhost:8080](http://localhost:8080) — `admin` / `admin`
@@ -86,6 +87,9 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
   votes, comments incl. approval setting, admin triage (status/pin), daily
   submission rate limit, audit trail — authorization matrix integration-tested
   end to end
+- ✅ Web shell: Keycloak login (PKCE, login-required), themed IdP login page,
+  token interceptor, single-bootstrap signal store with visible theme
+  preference, accessible UI primitives (CDK dialog/menu), lazy routes
 
 ## Git workflow and commit convention
 
