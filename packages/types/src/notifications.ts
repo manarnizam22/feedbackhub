@@ -32,6 +32,7 @@ export const ChangeEventSchema = z.object({
   action: z.string(),
   entityType: z.string(),
   entityId: z.string(),
+  actorId: z.string(),
 });
 
 export const NotificationEventSchema = z.object({

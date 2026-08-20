@@ -42,6 +42,9 @@ export class RequestsStore {
 
   constructor() {
     live.onChange((event) => {
+      if (event.actorId === this.bootstrap.profile()?.id) {
+        return;
+      }
       if (event.entityType !== 'request' && event.entityType !== 'comment') {
         return;
       }
@@ -56,7 +59,12 @@ export class RequestsStore {
     });
   }
 
+  private loadSeq = 0;
+
+  /* Same stale-response guard as the detail page: user-driven loads and SSE
+     refreshes overlap, and only the newest response may win. */
   async load(): Promise<void> {
+    const seq = ++this.loadSeq;
     this.state.set('loading');
     try {
       const data = await firstValueFrom(
@@ -69,9 +77,15 @@ export class RequestsStore {
           mine: this.mine() || undefined,
         }),
       );
+      if (seq !== this.loadSeq) {
+        return;
+      }
       this.data.set(data);
       this.state.set('ready');
     } catch (error) {
+      if (seq !== this.loadSeq) {
+        return;
+      }
       if (error instanceof ApiError) {
         this.errorMessage.set(error.message);
       }

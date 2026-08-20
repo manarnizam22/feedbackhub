@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: feedbackhub
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:17-alpine
+          command:
+            [
+              'sh',
+              '-c',
+              'until pg_isready -h postgres -U feedbackhub -d feedbackhub; do sleep 2; done',
+            ]
+      containers:
+        - name: migrate
+          # the api image's build stage: full workspace with pnpm + drizzle-kit
+          image: feedbackhub-tools:dev
+          imagePullPolicy: Never
+          workingDir: /repo
+          command: ['sh', '-c', 'pnpm db:migrate && pnpm db:seed']
+          env:
+            - name: DATABASE_URL
+              value: postgres://feedbackhub:feedbackhub-dev@postgres:5432/feedbackhub

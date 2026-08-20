@@ -112,6 +112,16 @@ describe('feedback API (integration)', () => {
       .set({ pinned: false })
       .where(ne(feedbackRequests.id, SEEDED_PINNED));
     await db
+      .insert(votes)
+      .values([
+        { requestId: SEEDED_PINNED, userId: '11111111-1111-4111-8111-111111111111' },
+        { requestId: SEEDED_PINNED, userId: '22222222-2222-4222-8222-222222222222' },
+      ])
+      .onConflictDoUpdate({
+        target: [votes.requestId, votes.userId],
+        set: { deletedAt: null, deletedBy: null },
+      });
+    await db
       .update(feedbackRequests)
       .set({ pinned: true })
       .where(eq(feedbackRequests.id, SEEDED_PINNED));

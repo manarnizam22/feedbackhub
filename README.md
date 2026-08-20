@@ -56,18 +56,38 @@ pnpm --filter web dev                # Angular SPA on :4200
   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` (see `.env.example`).
   Without real credentials the button renders but Google rejects the flow.
 
-_(API/web dev servers are documented with their features)_
-
 ### Tests
 
 ```bash
 pnpm verify        # format check, lint, typecheck, unit + integration — definition of done
-pnpm e2e           # Playwright against the compose stack (includes keyboard-only pass)
+pnpm --filter e2e run e2e:install   # once: Playwright chromium
+pnpm e2e           # Playwright: user + admin journeys + keyboard-only pass
 ```
+
+`pnpm verify` needs the compose stack up (integration tests use real Keycloak
+tokens and real Postgres — no mocked auth anywhere). `pnpm e2e` additionally
+needs both dev servers running.
 
 ### Kubernetes (kind)
 
-_(documented with the deployment feature)_
+One built image per app serves every environment — runtime config comes from
+env vars (`env.js` for the SPA, plain env for the API).
+
+```bash
+kind create cluster --name feedbackhub --config infra/k8s/kind-config.yaml --image kindest/node:v1.31.9
+docker build -f infra/docker/api.Dockerfile --target build -t feedbackhub-tools:dev .
+docker build -f infra/docker/api.Dockerfile -t feedbackhub-api:dev .
+docker build -f infra/docker/web.Dockerfile -t feedbackhub-web:dev .
+kind load docker-image --name feedbackhub feedbackhub-api:dev feedbackhub-web:dev feedbackhub-tools:dev
+kubectl apply -k infra
+kubectl -n feedbackhub wait --for=condition=ready pod -l app=keycloak --timeout=300s
+```
+
+Then open [http://localhost:30080](http://localhost:30080) (web); the API is on
+:30081, Keycloak on :30082. Migrations + seed run as a Job; the API runs a
+single replica by design (in-process SSE fan-out — ADR-0010; Redis pub/sub is
+the documented scale-out path). Secrets ship with dev values in
+`infra/k8s/secrets.yaml` — override them anywhere real.
 
 ## Status
 
@@ -99,6 +119,12 @@ see [SCOPE.md](SCOPE.md) for the reasoning behind the edges)_
 - ✅ Realtime: SSE change stream (lists/detail refresh live) + in-app
   notifications with unread bell — events emitted only for committed
   transactions, integration-tested
+- ✅ Kubernetes: images built and cluster-verified on kind (issuer/JWKS split
+  proven — in-cluster token accepted by in-cluster API); migrations as a Job
+- ✅ E2E: 10 Playwright tests — user journey, admin triage, keyboard-only pass
+  — rerun-deterministic
+- ⚠️ Known limits (deliberate, reasoned in [SCOPE.md](SCOPE.md)): no email
+  delivery, single API replica for SSE, audit log write-only, English only
 
 ## Git workflow and commit convention
 
@@ -117,5 +143,6 @@ AI-Assisted: heavy | partial | none
 - **partial** — genuinely mixed authorship
 - **none** — hand-written
 
-All commit messages are written and committed by me personally; the AI assistant has
-no git access (see [AGENTS.md](AGENTS.md), "Division of labor").
+All commit messages are written and committed by me personally; the AI assistant
+never commits, branches, merges or pushes (see [AGENTS.md](AGENTS.md),
+"Division of labor").

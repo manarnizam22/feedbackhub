@@ -10,7 +10,8 @@ type KeycloakPayload = JWTPayload & {
   realm_access?: { roles?: string[] };
 };
 
-const jwks = createRemoteJWKSet(new URL(`${config.keycloak.issuer}/protocol/openid-connect/certs`));
+const jwksBase = config.keycloak.internalUrl ?? config.keycloak.issuer;
+const jwks = createRemoteJWKSet(new URL(`${jwksBase}/protocol/openid-connect/certs`));
 
 /* The single JWT verification path — the HTTP guard and the SSE endpoint both
    call this, so there is exactly one place where a token becomes a user. */
