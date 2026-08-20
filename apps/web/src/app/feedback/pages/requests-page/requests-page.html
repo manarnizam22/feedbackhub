@@ -17,24 +17,26 @@
     <select
       id="status"
       class="h-9 rounded-lg border border-zinc-300 bg-white px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
-      [value]="store.status()"
       (change)="store.setFilter({ status: $any($event.target).value })"
     >
-      <option value="">All statuses</option>
+      <option value="" [selected]="store.status() === ''">All statuses</option>
       @for (status of bootstrap.statuses(); track status.id) {
-        <option [value]="status.id">{{ status.name }}</option>
+        <option [value]="status.id" [selected]="store.status() === status.id">
+          {{ status.name }}
+        </option>
       }
     </select>
     <label class="sr-only" for="category">Filter by category</label>
     <select
       id="category"
       class="h-9 rounded-lg border border-zinc-300 bg-white px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
-      [value]="store.category()"
       (change)="store.setFilter({ category: $any($event.target).value })"
     >
-      <option value="">All categories</option>
+      <option value="" [selected]="store.category() === ''">All categories</option>
       @for (category of bootstrap.categories(); track category.id) {
-        <option [value]="category.id">{{ category.name }}</option>
+        <option [value]="category.id" [selected]="store.category() === category.id">
+          {{ category.name }}
+        </option>
       }
     </select>
     <label class="sr-only" for="sort">Sort</label>
@@ -91,21 +93,21 @@
             @for (item of data.items; track item.id) {
               <li>
                 <article
-                  class="flex gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+                  class="flex gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-150 hover:-translate-y-px hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/20 dark:hover:border-zinc-700"
                 >
                   <button
                     type="button"
-                    class="flex h-14 w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    class="flex h-14 w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border text-sm font-semibold tabular-nums transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-95"
                     [class]="
                       item.myVote
-                        ? 'border-indigo-600 bg-indigo-600 text-white'
-                        : 'border-zinc-300 text-zinc-700 hover:border-indigo-400 dark:border-zinc-700 dark:text-zinc-300'
+                        ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-600/40'
+                        : 'border-zinc-300 bg-zinc-50 text-zinc-700 hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:text-indigo-400'
                     "
                     (click)="store.toggleVote(item)"
                     [attr.aria-pressed]="item.myVote"
                     [attr.aria-label]="'Vote for ' + item.title + ', ' + item.voteCount + ' votes'"
                   >
-                    <span aria-hidden="true" class="text-xs leading-none">▲</span>
+                    <fh-icon name="chevron-up" [size]="14" />
                     {{ item.voteCount }}
                   </button>
                   <div class="min-w-0 flex-1">
@@ -143,7 +145,9 @@
                       <span aria-hidden="true">·</span>
                       <span>{{ relativeTime(item.createdAt) }}</span>
                       <span aria-hidden="true">·</span>
-                      <span>💬 {{ item.commentCount }}</span>
+                      <span class="inline-flex items-center gap-1">
+                        <fh-icon name="chat" [size]="13" />{{ item.commentCount }}
+                      </span>
                     </div>
                   </div>
                 </article>

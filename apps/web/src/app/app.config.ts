@@ -11,6 +11,8 @@ import { apiErrorInterceptor } from '@core/api-error-interceptor';
 import { authInterceptor } from '@core/auth-interceptor';
 import { BootstrapStore } from '@core/bootstrap-store';
 import { initKeycloak } from '@core/keycloak';
+import { live } from '@core/live';
+import { NotificationsStore } from '@notifications/data/notifications-store';
 
 import { routes } from './app.routes';
 
@@ -21,8 +23,11 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, apiErrorInterceptor])),
     provideAppInitializer(async () => {
       const bootstrap = inject(BootstrapStore);
+      const notifications = inject(NotificationsStore);
       await initKeycloak();
       await bootstrap.load();
+      live.start();
+      await notifications.load();
     }),
   ],
 };

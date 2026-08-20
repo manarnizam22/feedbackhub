@@ -6,12 +6,13 @@ import { relativeTime } from '@core/format';
 import { FhButton } from '@ui/button';
 import { FhEmptyState } from '@ui/empty-state';
 import { FhErrorState } from '@ui/error-state';
+import { FhIcon } from '@ui/icons';
 import { FhSpinner } from '@ui/spinner';
 import { RequestsStore } from '@feedback/data/requests-store';
 
 @Component({
   selector: 'app-requests-page',
-  imports: [RouterLink, FhButton, FhEmptyState, FhErrorState, FhSpinner],
+  imports: [RouterLink, FhButton, FhEmptyState, FhErrorState, FhIcon, FhSpinner],
   templateUrl: './requests-page.html',
 })
 export class RequestsPage {

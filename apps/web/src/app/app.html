@@ -6,9 +6,32 @@
       Feedback<span class="text-indigo-600">Hub</span>
     </a>
     <nav class="flex items-center gap-1 text-sm" aria-label="Main">
-      <a fh-button variant="ghost" routerLink="/requests">Requests</a>
+      <a
+        fh-button
+        variant="ghost"
+        routerLink="/requests"
+        routerLinkActive="!bg-indigo-50 !text-indigo-700 dark:!bg-indigo-950/60 dark:!text-indigo-300"
+        >Requests</a
+      >
     </nav>
-    <div class="ml-auto flex items-center gap-3">
+    <div class="ml-auto flex items-center gap-2">
+      <button
+        type="button"
+        class="relative flex size-9 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        [cdkMenuTriggerFor]="notificationsMenu"
+        (cdkMenuOpened)="notifications.markAllRead()"
+        [attr.aria-label]="'Notifications, ' + notifications.unread() + ' unread'"
+      >
+        <fh-icon name="bell" [size]="20" />
+        @if (notifications.hasUnread()) {
+          <span
+            class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-zinc-950"
+            style="animation: fh-badge-pop 0.25s ease-out"
+            aria-hidden="true"
+            >{{ notifications.unread() }}</span
+          >
+        }
+      </button>
       <button
         type="button"
         class="flex size-9 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
@@ -24,6 +47,34 @@
 <main class="mx-auto max-w-5xl px-4 py-6">
   <router-outlet />
 </main>
+
+<fh-toasts />
+
+<ng-template #notificationsMenu>
+  <div
+    cdkMenu
+    class="mt-2 w-80 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+  >
+    <p class="px-3 py-2 text-sm font-semibold">Notifications</p>
+    @for (item of notifications.items(); track item.id) {
+      <a
+        cdkMenuItem
+        [routerLink]="['/requests', item.requestId]"
+        class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm hover:bg-zinc-100 focus-visible:bg-zinc-100 focus-visible:outline-none dark:hover:bg-zinc-800 dark:focus-visible:bg-zinc-800"
+      >
+        <span class="font-medium">{{ item.actorName }}</span>
+        {{ labelFor(item.type) }}
+        <span class="font-medium">“{{ item.requestTitle }}”</span>
+        @if (item.type === 'status_change' && item.detail) {
+          to <span class="font-medium">{{ item.detail }}</span>
+        }
+        <span class="block text-xs text-zinc-500">{{ relativeTime(item.createdAt) }}</span>
+      </a>
+    } @empty {
+      <p class="px-3 py-6 text-center text-sm text-zinc-500">Nothing yet — you're all caught up.</p>
+    }
+  </div>
+</ng-template>
 
 <ng-template #userMenu>
   <div

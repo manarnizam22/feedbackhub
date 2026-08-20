@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { subject } from '@feedbackhub/auth';
@@ -7,9 +7,11 @@ import type { RequestDetail } from '@feedbackhub/types';
 import { ApiError } from '@core/api-error';
 import { BootstrapStore } from '@core/bootstrap-store';
 import { relativeTime } from '@core/format';
+import { live } from '@core/live';
 import { ConfirmService } from '@ui/confirm-dialog';
 import { FhButton } from '@ui/button';
 import { FhErrorState } from '@ui/error-state';
+import { FhIcon } from '@ui/icons';
 import { FhSpinner } from '@ui/spinner';
 import { FeedbackApi } from '@feedback/data/feedback-api';
 
@@ -17,7 +19,7 @@ type DetailState = 'loading' | 'missing' | 'error' | 'ready';
 
 @Component({
   selector: 'app-request-detail-page',
-  imports: [RouterLink, FhButton, FhErrorState, FhSpinner],
+  imports: [RouterLink, FhButton, FhErrorState, FhIcon, FhSpinner],
   templateUrl: './request-detail-page.html',
 })
 export class RequestDetailPage {
@@ -55,6 +57,14 @@ export class RequestDetailPage {
 
   constructor() {
     void this.load();
+    const unsubscribe = live.onChange((event) => {
+      const aboutThisRequest = event.entityId === this.id;
+      const aboutItsComments = event.entityType === 'comment';
+      if ((aboutThisRequest || aboutItsComments) && this.state() === 'ready') {
+        void this.load();
+      }
+    });
+    inject(DestroyRef).onDestroy(unsubscribe);
   }
 
   async load(): Promise<void> {
@@ -75,6 +85,15 @@ export class RequestDetailPage {
 
   canModerateComment(authorId: string): boolean {
     return !!this.bootstrap.ability()?.can('delete', subject('Comment', { authorId }));
+  }
+
+  canApproveComments(): boolean {
+    return !!this.bootstrap.ability()?.can('approve', 'Comment');
+  }
+
+  async approveComment(commentId: string): Promise<void> {
+    await firstValueFrom(this.api.approveComment(commentId));
+    await this.load();
   }
 
   async toggleVote(): Promise<void> {

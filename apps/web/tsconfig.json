@@ -18,6 +18,7 @@
       "@ui/*": ["./src/app/ui/*"],
       "@feedback/*": ["./src/app/feedback/*"],
       "@settings/*": ["./src/app/settings/*"],
+      "@notifications/*": ["./src/app/notifications/*"],
       "@admin/*": ["./src/app/admin/*"]
     }
   },
