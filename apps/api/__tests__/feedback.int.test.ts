@@ -10,6 +10,8 @@ import {
   comments,
   createDb,
   feedbackRequests,
+  notifications,
+  statuses,
   votes,
 } from '@feedbackhub/db';
 import { ListRequestsResponseSchema, RequestDetailSchema } from '@feedbackhub/types';
@@ -44,6 +46,21 @@ describe('feedback API (integration)', () => {
   let alice: string;
   let admin: string;
   const { db, pool } = createDb();
+  const settingsSnapshot = new Map<string, unknown>();
+
+  const snapshotSetting = async (key: string) => {
+    const rows = await db.select().from(appSettings).where(eq(appSettings.key, key));
+    settingsSnapshot.set(key, rows[0]?.value);
+  };
+
+  const restoreSetting = async (key: string) => {
+    if (settingsSnapshot.has(key)) {
+      await db
+        .update(appSettings)
+        .set({ value: settingsSnapshot.get(key) })
+        .where(eq(appSettings.key, key));
+    }
+  };
 
   const call = (
     method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
@@ -80,6 +97,8 @@ describe('feedback API (integration)', () => {
     await app.getHttpAdapter().getInstance().ready();
     alice = await getToken('alice@dev.local', 'alice-dev');
     admin = await getToken('admin@dev.local', 'admin-dev');
+    await snapshotSetting('submissions_per_user_per_day');
+    await snapshotSetting('comments_require_approval');
     await db
       .update(appSettings)
       .set({ value: 100 })
@@ -96,6 +115,11 @@ describe('feedback API (integration)', () => {
       .update(feedbackRequests)
       .set({ pinned: true })
       .where(eq(feedbackRequests.id, SEEDED_PINNED));
+    await db.update(statuses).set({ isDefault: false }).where(eq(statuses.isDefault, true));
+    await db
+      .update(statuses)
+      .set({ isDefault: true, active: true })
+      .where(eq(statuses.id, 'b1000000-0000-4000-8000-000000000001'));
   });
 
   afterAll(async () => {
@@ -105,18 +129,13 @@ describe('feedback API (integration)', () => {
       .where(like(feedbackRequests.title, 'itest:%'));
     const ids = rows.map((row) => row.id);
     if (ids.length > 0) {
+      await db.delete(notifications).where(inArray(notifications.requestId, ids));
       await db.delete(votes).where(inArray(votes.requestId, ids));
       await db.delete(comments).where(inArray(comments.requestId, ids));
       await db.delete(feedbackRequests).where(inArray(feedbackRequests.id, ids));
     }
-    await db
-      .update(appSettings)
-      .set({ value: false })
-      .where(eq(appSettings.key, 'comments_require_approval'));
-    await db
-      .update(appSettings)
-      .set({ value: 10 })
-      .where(eq(appSettings.key, 'submissions_per_user_per_day'));
+    await restoreSetting('comments_require_approval');
+    await restoreSetting('submissions_per_user_per_day');
     await app.close();
     await pool.end();
   });

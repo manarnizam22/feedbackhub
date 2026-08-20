@@ -38,7 +38,7 @@ export class CommentsController {
     @Param('id', IdParam) requestId: string,
     @Body(new ZodValidationPipe(CreateCommentSchema)) body: CreateComment,
   ) {
-    return this.comments.create(user.id, requestId, body.body);
+    return this.comments.create(user.id, user.displayName, requestId, body.body);
   }
 
   @Patch('comments/:id')
@@ -60,7 +60,7 @@ export class CommentsController {
     @CurrentAbility() ability: AppAbility,
     @Param('id', IdParam) id: string,
   ) {
-    return this.comments.remove(user.id, ability, id);
+    return this.comments.remove(user.id, user.displayName, ability, id);
   }
 
   @Get('admin/comments/pending')
@@ -76,6 +76,6 @@ export class CommentsController {
     @CurrentAbility() ability: AppAbility,
     @Param('id', IdParam) id: string,
   ) {
-    return this.comments.approve(user.id, ability, id);
+    return this.comments.approve(user.id, user.displayName, ability, id);
   }
 }
