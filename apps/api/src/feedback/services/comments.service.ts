@@ -1,12 +1,12 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, eq, isNull } from 'drizzle-orm';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import { comments, feedbackRequests, users } from '@feedbackhub/db';
 import { subject, type AppAbility } from '@feedbackhub/auth';
-import type { Comment } from '@feedbackhub/types';
+import type { Comment, PendingComment } from '@feedbackhub/types';
 
 import { AuditService, type Tx } from '../../common/audit.service.js';
 import { DB, type Db } from '../../common/db.module.js';
-import { SettingsService } from '../../settings/settings.service.js';
+import { SettingsService } from '../../settings/services/settings.service.js';
 
 @Injectable()
 export class CommentsService {
@@ -83,6 +83,44 @@ export class CommentsService {
         return row.authorId !== userId;
       },
     );
+  }
+
+  async listPending(ability: AppAbility): Promise<PendingComment[]> {
+    if (!ability.can('approve', 'Comment')) {
+      throw new ForbiddenException('Admin role required');
+    }
+    const rows = await this.db
+      .select({
+        id: comments.id,
+        requestId: comments.requestId,
+        requestTitle: feedbackRequests.title,
+        authorName: users.displayName,
+        body: comments.body,
+        createdAt: comments.createdAt,
+      })
+      .from(comments)
+      .innerJoin(feedbackRequests, eq(comments.requestId, feedbackRequests.id))
+      .innerJoin(users, eq(comments.authorId, users.id))
+      .where(and(eq(comments.approved, false), isNull(comments.deletedAt)))
+      .orderBy(asc(comments.createdAt));
+    return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+  }
+
+  async approve(userId: string, ability: AppAbility, id: string): Promise<Comment> {
+    if (!ability.can('approve', 'Comment')) {
+      throw new ForbiddenException('Admin role required');
+    }
+    await this.audit.transaction(
+      { actorId: userId, action: 'comment.approve', entityType: 'comment', entityId: id },
+      async (tx) => {
+        await this.getLiveRow(tx, id);
+        await tx
+          .update(comments)
+          .set({ approved: true, updatedAt: new Date() })
+          .where(eq(comments.id, id));
+      },
+    );
+    return this.getById(id);
   }
 
   private async getById(id: string): Promise<Comment> {

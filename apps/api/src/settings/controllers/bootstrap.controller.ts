@@ -2,10 +2,10 @@ import { Controller, Get, Inject, NotFoundException } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { BootstrapResponse } from '@feedbackhub/types';
 
-import { CurrentUser, type AuthenticatedUser } from '../auth/current-user.decorator.js';
-import { TaxonomyService } from '../taxonomy/taxonomy.service.js';
-import { UsersService } from '../users/users.service.js';
-import { SettingsService } from './settings.service.js';
+import { CurrentUser, type AuthenticatedUser } from '../../auth/current-user.decorator.js';
+import { TaxonomyService } from '../../taxonomy/services/taxonomy.service.js';
+import { UsersService } from '../../users/services/users.service.js';
+import { SettingsService } from '../services/settings.service.js';
 
 /* One request, everything the SPA needs to start (ADR-0009): profile,
    resolved preferences, taxonomy, feature flags. No startup request chain. */

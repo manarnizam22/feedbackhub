@@ -21,7 +21,7 @@ import type {
 
 import { AuditService, type Tx } from '../../common/audit.service.js';
 import { DB, type Db } from '../../common/db.module.js';
-import { SettingsService } from '../../settings/settings.service.js';
+import { SettingsService } from '../../settings/services/settings.service.js';
 
 export function escapeLike(input: string): string {
   return input.replace(/[\\%_]/g, (match) => `\\${match}`);
@@ -39,15 +39,15 @@ export class RequestsService {
     return sql<number>`(select count(*)::int from ${votes} v where v.request_id = ${feedbackRequests.id} and v.deleted_at is null)`;
   }
 
-  private commentCount(userId: string) {
-    return sql<number>`(select count(*)::int from ${comments} c where c.request_id = ${feedbackRequests.id} and c.deleted_at is null and (c.approved or c.author_id = ${userId}))`;
+  private commentCount(userId: string, isAdmin: boolean) {
+    return sql<number>`(select count(*)::int from ${comments} c where c.request_id = ${feedbackRequests.id} and c.deleted_at is null and (c.approved or c.author_id = ${userId} or ${isAdmin}))`;
   }
 
   private myVote(userId: string) {
     return sql<boolean>`exists(select 1 from ${votes} v where v.request_id = ${feedbackRequests.id} and v.user_id = ${userId} and v.deleted_at is null)`;
   }
 
-  private baseSelect(userId: string) {
+  private baseSelect(userId: string, isAdmin = false) {
     return {
       id: feedbackRequests.id,
       title: feedbackRequests.title,
@@ -60,7 +60,7 @@ export class RequestsService {
       authorName: users.displayName,
       pinned: feedbackRequests.pinned,
       voteCount: this.voteCount(),
-      commentCount: this.commentCount(userId),
+      commentCount: this.commentCount(userId, isAdmin),
       myVote: this.myVote(userId),
       createdAt: feedbackRequests.createdAt,
       updatedAt: feedbackRequests.updatedAt,
@@ -101,7 +101,7 @@ export class RequestsService {
       newest: desc(feedbackRequests.createdAt),
       oldest: asc(feedbackRequests.createdAt),
       votes: desc(this.voteCount()),
-      comments: desc(this.commentCount(userId)),
+      comments: desc(this.commentCount(userId, false)),
     } as const;
 
     const [rows, totals] = await Promise.all([
@@ -126,9 +126,9 @@ export class RequestsService {
     };
   }
 
-  async detail(userId: string, id: string): Promise<RequestDetail> {
+  async detail(userId: string, id: string, isAdmin = false): Promise<RequestDetail> {
     const rows = await this.db
-      .select(this.baseSelect(userId))
+      .select(this.baseSelect(userId, isAdmin))
       .from(feedbackRequests)
       .innerJoin(categories, eq(feedbackRequests.categoryId, categories.id))
       .innerJoin(statuses, eq(feedbackRequests.statusId, statuses.id))
@@ -157,7 +157,7 @@ export class RequestsService {
         and(
           eq(comments.requestId, id),
           isNull(comments.deletedAt),
-          or(eq(comments.approved, true), eq(comments.authorId, userId)),
+          or(eq(comments.approved, true), eq(comments.authorId, userId), sql`${isAdmin}`),
         ),
       )
       .orderBy(asc(comments.createdAt));

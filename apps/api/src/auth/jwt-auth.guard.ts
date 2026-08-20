@@ -10,7 +10,7 @@ import { defineAbilityFor } from '@feedbackhub/auth';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 
 import { config } from '../config.js';
-import { UsersService } from '../users/users.service.js';
+import { UsersService } from '../users/services/users.service.js';
 import type { AuthenticatedRequest } from './current-user.decorator.js';
 import { IS_PUBLIC } from './public.decorator.js';
 

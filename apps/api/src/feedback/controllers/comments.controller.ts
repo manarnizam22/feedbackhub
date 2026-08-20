@@ -1,4 +1,14 @@
-﻿import { Body, Controller, Delete, HttpCode, Inject, Param, Patch, Post } from '@nestjs/common';
+﻿import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Inject,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { CreateCommentSchema, UpdateCommentSchema, type CreateComment } from '@feedbackhub/types';
@@ -51,5 +61,21 @@ export class CommentsController {
     @Param('id', IdParam) id: string,
   ) {
     return this.comments.remove(user.id, ability, id);
+  }
+
+  @Get('admin/comments/pending')
+  @ApiOperation({ summary: 'Comments awaiting approval (admin)' })
+  pending(@CurrentAbility() ability: AppAbility) {
+    return this.comments.listPending(ability);
+  }
+
+  @Post('comments/:id/approve')
+  @ApiOperation({ summary: 'Approve a pending comment (admin)' })
+  approve(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentAbility() ability: AppAbility,
+    @Param('id', IdParam) id: string,
+  ) {
+    return this.comments.approve(user.id, ability, id);
   }
 }
