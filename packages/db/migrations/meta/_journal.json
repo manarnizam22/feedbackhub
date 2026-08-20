@@ -8,6 +8,27 @@
       "when": 1787144976229,
       "tag": "0000_wild_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787228093070,
+      "tag": "0001_flippant_magus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787229438438,
+      "tag": "0002_brief_magik",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787231128493,
+      "tag": "0003_busy_gladiator",
+      "breakpoints": true
     }
   ]
 }

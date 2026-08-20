@@ -44,7 +44,7 @@ async function main() {
     .insert(users)
     .values([
       { id: SEED.users.alice, email: 'alice@dev.local', displayName: 'Alice Dev' },
-      { id: SEED.users.admin, email: 'admin@dev.local', displayName: 'Ada Admin' },
+      { id: SEED.users.admin, email: 'admin@dev.local', displayName: 'Ada Admin', isAdmin: true },
     ])
     .onConflictDoNothing();
 
