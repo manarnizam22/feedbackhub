@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { adminGuard } from '@core/admin-guard';
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'requests' },
   {
@@ -28,6 +30,11 @@ export const routes: Routes = [
     path: 'settings',
     loadComponent: () =>
       import('@settings/pages/settings-page/settings-page').then((m) => m.SettingsPage),
+  },
+  {
+    path: 'admin',
+    canMatch: [adminGuard],
+    loadComponent: () => import('@admin/pages/admin-page/admin-page').then((m) => m.AdminPage),
   },
   { path: '**', redirectTo: 'requests' },
 ];

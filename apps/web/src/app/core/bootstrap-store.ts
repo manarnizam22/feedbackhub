@@ -44,4 +44,19 @@ export class BootstrapStore {
     this.state.set(data);
     applyTheme(data.preferences.theme);
   }
+
+  applyPreferences(preferences: BootstrapResponse['preferences']): void {
+    const current = this.state();
+    if (current) {
+      this.state.set({ ...current, preferences });
+      applyTheme(preferences.theme);
+    }
+  }
+
+  applyDisplayName(displayName: string): void {
+    const current = this.state();
+    if (current) {
+      this.state.set({ ...current, profile: { ...current.profile, displayName } });
+    }
+  }
 }

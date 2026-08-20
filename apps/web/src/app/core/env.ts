@@ -12,6 +12,6 @@ declare global {
 /* Dev defaults match the compose stack; deployments override via an env.js
    script written by the container entrypoint — no rebuild per environment. */
 export const env = {
-  apiUrl: window.__env?.apiUrl ?? 'http://localhost:3000',
+  apiUrl: window.__env?.apiUrl ?? 'http://localhost:3010',
   keycloakUrl: window.__env?.keycloakUrl ?? 'http://localhost:8080',
 } as const;

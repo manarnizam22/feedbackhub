@@ -1,0 +1,159 @@
+<div class="mx-auto flex max-w-xl flex-col gap-8">
+  <h1 class="text-xl font-semibold tracking-tight">Settings</h1>
+
+  <section class="flex flex-col gap-4" aria-labelledby="profile-heading">
+    <h2 id="profile-heading" class="text-base font-semibold">Profile</h2>
+    <div class="flex items-center gap-3">
+      <span
+        class="flex size-12 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white"
+        aria-hidden="true"
+        >{{ initialsPreview() }}</span
+      >
+      <p class="text-sm text-zinc-500">
+        {{ bootstrap.profile()?.email }} — avatar shows your initials
+      </p>
+    </div>
+    <fh-form-field label="Display name" inputId="displayName" [error]="profileError() || null">
+      <input
+        id="displayName"
+        type="text"
+        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+        [value]="displayName()"
+        (input)="displayName.set($any($event.target).value)"
+      />
+    </fh-form-field>
+    <div class="flex items-center gap-3">
+      <button fh-button type="button" [disabled]="savingProfile()" (click)="saveProfile()">
+        {{ savingProfile() ? 'Saving…' : 'Save profile' }}
+      </button>
+      @if (profileMessage()) {
+        <p class="text-sm text-green-600 dark:text-green-400" role="status">
+          {{ profileMessage() }}
+        </p>
+      }
+    </div>
+  </section>
+
+  <hr class="border-zinc-200 dark:border-zinc-800" />
+
+  <section class="flex flex-col gap-4" aria-labelledby="prefs-heading">
+    <h2 id="prefs-heading" class="text-base font-semibold">Preferences</h2>
+
+    <fieldset class="flex flex-col gap-2">
+      <legend class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Theme</legend>
+      <div class="flex gap-2" role="radiogroup" aria-label="Theme">
+        @for (option of ['light', 'dark', 'system']; track option) {
+          <label
+            class="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm capitalize"
+            [class]="
+              theme() === option
+                ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                : 'border-zinc-300 dark:border-zinc-700'
+            "
+          >
+            <input
+              type="radio"
+              name="theme"
+              class="sr-only"
+              [value]="option"
+              [checked]="theme() === option"
+              (change)="theme.set($any(option))"
+            />
+            {{ option }}
+          </label>
+        }
+      </div>
+    </fieldset>
+
+    <fh-form-field label="Language" inputId="language">
+      <select
+        id="language"
+        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        [value]="language()"
+        (change)="language.set($any($event.target).value)"
+      >
+        <option value="en">English</option>
+      </select>
+      <p class="text-xs text-zinc-500">More languages are on the roadmap.</p>
+    </fh-form-field>
+
+    <fh-form-field label="Default sorting" inputId="defaultSort">
+      <select
+        id="defaultSort"
+        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        [value]="defaultSort()"
+        (change)="defaultSort.set($any($event.target).value)"
+      >
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+        <option value="votes">Most voted</option>
+        <option value="comments">Most discussed</option>
+      </select>
+    </fh-form-field>
+
+    <div class="grid grid-cols-2 gap-3">
+      <fh-form-field label="Default status filter" inputId="defaultStatus">
+        <select
+          id="defaultStatus"
+          class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          [value]="defaultStatus()"
+          (change)="defaultStatus.set($any($event.target).value)"
+        >
+          <option value="">None</option>
+          @for (status of bootstrap.statuses(); track status.id) {
+            <option [value]="status.id">{{ status.name }}</option>
+          }
+        </select>
+      </fh-form-field>
+      <fh-form-field label="Default category filter" inputId="defaultCategory">
+        <select
+          id="defaultCategory"
+          class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          [value]="defaultCategory()"
+          (change)="defaultCategory.set($any($event.target).value)"
+        >
+          <option value="">None</option>
+          @for (category of bootstrap.categories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+      </fh-form-field>
+    </div>
+
+    <label class="flex cursor-pointer items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        class="accent-indigo-600"
+        [checked]="notifyOnComment()"
+        (change)="notifyOnComment.set($any($event.target).checked)"
+      />
+      Notify me when someone comments on my requests
+    </label>
+
+    <div class="flex items-center gap-3">
+      <button fh-button type="button" [disabled]="savingPrefs()" (click)="savePreferences()">
+        {{ savingPrefs() ? 'Saving…' : 'Save preferences' }}
+      </button>
+      @if (prefsMessage()) {
+        <p class="text-sm text-green-600 dark:text-green-400" role="status">{{ prefsMessage() }}</p>
+      }
+    </div>
+  </section>
+
+  <hr class="border-zinc-200 dark:border-zinc-800" />
+
+  <section class="flex flex-col gap-3" aria-labelledby="danger-heading">
+    <h2 id="danger-heading" class="text-base font-semibold text-red-600 dark:text-red-400">
+      Danger zone
+    </h2>
+    <p class="text-sm text-zinc-500">
+      Deleting your account deactivates it and signs you out. Your requests and comments remain on
+      the board.
+    </p>
+    <div>
+      <button fh-button variant="danger" type="button" (click)="deleteAccount()">
+        Delete account
+      </button>
+    </div>
+  </section>
+</div>

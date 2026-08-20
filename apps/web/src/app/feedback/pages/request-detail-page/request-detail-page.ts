@@ -51,6 +51,7 @@ export class RequestDetailPage {
       request && ability?.can('delete', subject('Request', { authorId: request.authorId }))
     );
   });
+  readonly canTriage = computed(() => !!this.bootstrap.ability()?.can('setStatus', 'Request'));
 
   constructor() {
     void this.load();
@@ -92,6 +93,20 @@ export class RequestDetailPage {
     } catch {
       this.request.set(current);
     }
+  }
+
+  async setStatus(statusId: string): Promise<void> {
+    const updated = await firstValueFrom(this.api.setStatus(this.id, statusId));
+    this.request.set(updated);
+  }
+
+  async togglePin(): Promise<void> {
+    const current = this.request();
+    if (!current) {
+      return;
+    }
+    await firstValueFrom(this.api.setPinned(this.id, !current.pinned));
+    this.request.set({ ...current, pinned: !current.pinned });
   }
 
   async postComment(): Promise<void> {

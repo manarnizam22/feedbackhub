@@ -1,0 +1,238 @@
+<div class="flex flex-col gap-8">
+  <h1 class="text-xl font-semibold tracking-tight">Admin</h1>
+
+  @if (error()) {
+    <div
+      role="alert"
+      class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+    >
+      {{ error() }}
+    </div>
+  }
+  @if (message()) {
+    <p class="text-sm text-green-600 dark:text-green-400" role="status">{{ message() }}</p>
+  }
+
+  <section aria-labelledby="queue-heading" class="flex flex-col gap-3">
+    <h2 id="queue-heading" class="text-base font-semibold">Comments awaiting approval</h2>
+    @if (pending(); as queue) {
+      @if (queue.length === 0) {
+        <p class="text-sm text-zinc-500">Queue is empty — nothing waiting.</p>
+      } @else {
+        <ul class="flex flex-col gap-3">
+          @for (comment of queue; track comment.id) {
+            <li
+              class="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              <div class="min-w-0">
+                <p class="text-sm">
+                  <span class="font-medium">{{ comment.authorName }}</span>
+                  <span class="text-zinc-500"> on </span>
+                  <a
+                    class="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                    [routerLink]="['/requests', comment.requestId]"
+                    >{{ comment.requestTitle }}</a
+                  >
+                  <span class="text-zinc-500"> · {{ relativeTime(comment.createdAt) }}</span>
+                </p>
+                <p class="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{{ comment.body }}</p>
+              </div>
+              <div class="flex shrink-0 gap-2">
+                <button fh-button type="button" (click)="approve(comment.id)">Approve</button>
+                <button fh-button variant="danger" type="button" (click)="reject(comment.id)">
+                  Reject
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <fh-spinner label="Loading queue…" />
+    }
+  </section>
+
+  <hr class="border-zinc-200 dark:border-zinc-800" />
+
+  <div class="grid gap-8 md:grid-cols-2">
+    <section aria-labelledby="categories-heading" class="flex flex-col gap-3">
+      <h2 id="categories-heading" class="text-base font-semibold">Categories</h2>
+      <ul class="flex flex-col gap-2">
+        @for (category of bootstrap.categories(); track category.id) {
+          <li
+            class="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800"
+          >
+            <span [class.line-through]="!category.active" [class.text-zinc-400]="!category.active">
+              {{ category.name }}
+            </span>
+            <button
+              fh-button
+              variant="ghost"
+              type="button"
+              (click)="toggleCategory(category.id, !category.active)"
+            >
+              {{ category.active ? 'Retire' : 'Reactivate' }}
+            </button>
+          </li>
+        }
+      </ul>
+      <form class="flex gap-2" (submit)="$event.preventDefault(); addCategory()">
+        <label class="sr-only" for="new-category">New category name</label>
+        <input
+          id="new-category"
+          type="text"
+          placeholder="New category…"
+          class="h-9 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          [value]="newCategory()"
+          (input)="newCategory.set($any($event.target).value)"
+        />
+        <button fh-button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section aria-labelledby="statuses-heading" class="flex flex-col gap-3">
+      <h2 id="statuses-heading" class="text-base font-semibold">Statuses</h2>
+      <ul class="flex flex-col gap-2">
+        @for (status of bootstrap.statuses(); track status.id) {
+          <li
+            class="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800"
+          >
+            <span class="flex items-center gap-2">
+              <span [class.line-through]="!status.active" [class.text-zinc-400]="!status.active">
+                {{ status.name }}
+              </span>
+              @if (status.isDefault) {
+                <span
+                  class="rounded bg-indigo-50 px-1.5 py-0.5 text-[11px] font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                  >default</span
+                >
+              }
+            </span>
+            <span class="flex gap-1">
+              @if (!status.isDefault && status.active) {
+                <button fh-button variant="ghost" type="button" (click)="makeDefault(status.id)">
+                  Make default
+                </button>
+              }
+              @if (!status.isDefault) {
+                <button
+                  fh-button
+                  variant="ghost"
+                  type="button"
+                  (click)="toggleStatus(status.id, !status.active)"
+                >
+                  {{ status.active ? 'Retire' : 'Reactivate' }}
+                </button>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+      <form class="flex gap-2" (submit)="$event.preventDefault(); addStatus()">
+        <label class="sr-only" for="new-status">New status name</label>
+        <input
+          id="new-status"
+          type="text"
+          placeholder="New status…"
+          class="h-9 flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          [value]="newStatus()"
+          (input)="newStatus.set($any($event.target).value)"
+        />
+        <button fh-button type="submit">Add</button>
+      </form>
+    </section>
+  </div>
+
+  <hr class="border-zinc-200 dark:border-zinc-800" />
+
+  <section aria-labelledby="settings-heading" class="flex max-w-xl flex-col gap-4">
+    <h2 id="settings-heading" class="text-base font-semibold">Application settings</h2>
+    @if (settings(); as current) {
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300" for="reg-mode"
+          >Registration policy</label
+        >
+        <select
+          id="reg-mode"
+          class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          [value]="current.registrationPolicy.mode"
+          (change)="
+            patchSettings({
+              registrationPolicy: {
+                mode: $any($event.target).value,
+                allowedDomains: current.registrationPolicy.allowedDomains,
+              },
+            })
+          "
+        >
+          <option value="open">Open — anyone can register</option>
+          <option value="invite-only">Invite only</option>
+          <option value="domain-restricted">Restricted to email domains</option>
+        </select>
+        @if (current.registrationPolicy.mode === 'domain-restricted') {
+          <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300" for="domains"
+            >Allowed domains (comma-separated)</label
+          >
+          <input
+            id="domains"
+            type="text"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            [value]="current.registrationPolicy.allowedDomains.join(', ')"
+            (change)="
+              patchSettings({
+                registrationPolicy: {
+                  mode: current.registrationPolicy.mode,
+                  allowedDomains: $any($event.target).value.split(','),
+                },
+              })
+            "
+          />
+        }
+      </div>
+
+      <label class="flex cursor-pointer items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          class="accent-indigo-600"
+          [checked]="current.commentsRequireApproval"
+          (change)="patchSettings({ commentsRequireApproval: $any($event.target).checked })"
+        />
+        Comments require approval before they are visible
+      </label>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300" for="rate-limit"
+          >Submissions per user per day</label
+        >
+        <input
+          id="rate-limit"
+          type="number"
+          min="1"
+          max="1000"
+          class="w-32 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          [value]="current.submissionsPerUserPerDay"
+          (change)="patchSettings({ submissionsPerUserPerDay: +$any($event.target).value })"
+        />
+      </div>
+
+      <fieldset class="flex flex-col gap-2">
+        <legend class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Feature flags</legend>
+        <label class="flex cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            class="accent-indigo-600"
+            [checked]="current.featureFlags['compactList'] ?? false"
+            (change)="toggleFlag('compactList')"
+          />
+          Compact request list (denser rows, no description preview)
+        </label>
+      </fieldset>
+
+      <div>
+        <button fh-button type="button" (click)="saveSettings()">Save settings</button>
+      </div>
+    } @else {
+      <fh-spinner label="Loading settings…" />
+    }
+  </section>
+</div>
